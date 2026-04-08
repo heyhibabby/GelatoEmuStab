@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Gelato & Ice Cream Formulator · by Nitin Shah</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Mono:wght@400;500&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+    --cream: #FDF8F0; --vanilla: #EFE0C0; --caramel: #C8874A; --chocolate: #2C1506;
+    --choc2: #3D1F0D; --mint: #2A6B52; --mint2: #3D9970; --berry: #7B3F6E;
+    --steel: #556070; --gold: #D4A843; --gold2: #F0C060;
+    --pale: #FBF6EC; --card: #FFFFFF;
+    --shadow: rgba(44,21,6,.10); --shadow2: rgba(44,21,6,.06);
+    --red: #C0392B; --blue: #2471A3; --green: #1E8449;
+    --border: #E8D8B8;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(--choc2); min-height: 100vh; overflow-x: hidden; font-size: 13px; }
+
+/* ── HEADER ── */
+.site-header {
+    width: 100%; background: var(--chocolate);
+    border-bottom: 3px solid var(--caramel);
+    position: sticky; top: 0; z-index: 200;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+}
+.header-inner {
+    max-width: 1640px; margin: 0 auto; padding: 8px 20px;
+    display: flex; align-items: center; gap: 14px;
+}
+.header-logo { font-size: 2.0rem; line-height: 1; flex-shrink: 0; }
+.header-title { flex: 1; min-width: 0; }
+.header-title h1 {
+    font-family: 'Playfair Display', serif; font-size: 1.05rem;
+    color: var(--gold2); letter-spacing: .02em; line-height: 1.3;
+    white-space: normal; word-break: break-word;
+}
+.header-title-row2 {
+    display: flex; align-items: center; gap: 12px; margin-top: 4px; flex-wrap: wrap;
+}
+.header-title-row2 p {
+    font-size: .62rem; color: rgba(255,255,255,.72);
+    white-space: normal; line-height: 1.4; word-break: break-word; flex: 1; min-width: 0;
+}
+
+/* ── TOOLBAR (FIX #5: equal size buttons) ── */
+.toolbar {
+    background: var(--card); border-bottom: 1px solid var(--border);
+    padding: 9px 20px; display: flex; gap: 7px; flex-wrap: wrap;
+    justify-content: center; width: 100%;
+    box-shadow: 0 2px 8px var(--shadow2);
+}
+/* All toolbar buttons: fixed equal width + height */
+.tbtn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 148px; height: 36px; min-width: 148px;
+    padding: 0 8px;
+    background: var(--pale); border: 1.5px solid var(--border);
+    border-radius: 20px; font-size: .68rem; font-weight: 700; color: var(--choc2);
+    cursor: pointer; transition: all .15s; font-family: 'Nunito', sans-serif;
+    letter-spacing: .02em; white-space: nowrap; gap: 5px;
+    text-align: center;
+}
+.tbtn:hover { background: var(--caramel); color: #fff; border-color: var(--caramel); transform: translateY(-1px); }
+.tbtn.tbtn-accent { background: var(--choc2); color: var(--gold2); border-color: var(--choc2); }
+.tbtn.tbtn-accent:hover { background: var(--caramel); border-color: var(--caramel); }
+
+/* ── LAYOUT ── */
+.page-wrap { max-width: 1640px; margin: 0 auto; padding: 16px 20px; }
+.grid-main { display: grid; grid-template-columns: 440px 1fr; gap: 18px; align-items: start; }
+
+/* ── CARDS ── */
+.card {
+    background: var(--card); border-radius: 14px;
+    box-shadow: 0 2px 14px var(--shadow), 0 1px 3px var(--shadow2);
+    overflow: hidden; margin-bottom: 16px; border: 1px solid var(--border);
+    transition: box-shadow .2s;
+}
+.card:hover { box-shadow: 0 4px 20px var(--shadow); }
+.card-header {
+    padding: 11px 16px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, #fff 0%, var(--pale) 100%);
+}
+.card-header-icon { font-size: 1.1rem; }
+.card-header h2 {
+    font-family: 'Playfair Display', serif; font-size: .88rem; color: var(--choc2);
+    font-weight: 700; flex: 1;
+}
+.card-body { padding: 14px; }
+
+/* ── SECTION 1 FIELDS ── */
+.fields-compact { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.fields-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.fields-full { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field label {
+    font-size: .6rem; font-weight: 700; color: var(--steel);
+    text-transform: uppercase; letter-spacing: .07em;
+}
+.field input, .field select {
+    padding: 6px 9px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: .75rem; font-family: 'DM Mono', monospace; background: var(--pale);
+    color: var(--choc2); transition: border-color .15s; width: 100%;
+}
+.field input:focus, .field select:focus { outline: none; border-color: var(--caramel); background: #fff; }
+.hint { font-size: .55rem; color: var(--blue); margin-top: 2px; font-style: italic; }
+.section-label {
+    font-size: .58rem; font-weight: 700; color: var(--caramel);
+    text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ── BATCH WARNINGS (FIX #1) ── */
+.batch-warning {
+    background: rgba(192,57,43,.08); border-left: 3px solid var(--red);
+    padding: 8px 11px; margin-bottom: 8px; border-radius: 8px;
+    font-size: .63rem; display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: 6px;
+}
+/* Weight totals display box */
+.weight-totals-box {
+    background: linear-gradient(135deg, rgba(42,107,82,.06), rgba(212,168,67,.06));
+    border: 1.5px solid rgba(42,107,82,.2); border-radius: 10px;
+    padding: 9px 12px; margin-bottom: 10px; display: none;
+}
+.wt-row { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; font-size: .65rem; margin-bottom: 5px; }
+.wt-chip {
+    padding: 3px 10px; border-radius: 12px; font-family: 'DM Mono', monospace;
+    font-weight: 700; font-size: .68rem;
+}
+.wt-base { background: rgba(44,21,6,.08); color: var(--choc2); }
+.wt-add  { background: rgba(42,107,82,.15); color: var(--mint); }
+.wt-total{ background: var(--caramel); color: #fff; }
+.wt-batch{ background: rgba(36,113,163,.15); color: var(--blue); }
+.wt-sep  { color: var(--steel); font-size: .7rem; }
+.sync-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.sync-btn {
+    border: none; padding: 5px 13px; border-radius: 16px; font-size: .64rem;
+    cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 700;
+    transition: all .15s;
+}
+.sync-btn-base  { background: var(--caramel); color: #fff; }
+.sync-btn-total { background: var(--mint); color: #fff; }
+.sync-btn:hover { opacity: .88; transform: translateY(-1px); }
+
+/* ── INGREDIENT SEARCH ── */
+.csv-zone {
+    background: var(--pale); border-radius: 10px; padding: 10px 12px;
+    margin-bottom: 12px; border: 1.5px dashed var(--border); font-size: .68rem;
+}
+.search-flex { display: flex; gap: 7px; margin-bottom: 10px; }
+.search-flex input {
+    flex: 2; padding: 7px 12px; border: 1.5px solid var(--border);
+    border-radius: 20px; font-size: .72rem; background: var(--pale);
+    font-family: 'Nunito', sans-serif;
+}
+.search-flex select {
+    flex: 1; padding: 7px 8px; border: 1.5px solid var(--border);
+    border-radius: 20px; font-size: .68rem;
+}
+.search-results {
+    max-height: 200px; overflow-y: auto; background: white;
+    border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: 0 2px 8px var(--shadow2);
+}
+.result-item {
+    padding: 7px 12px; border-bottom: 1px solid var(--vanilla);
+    cursor: pointer; display: flex; justify-content: space-between;
+    font-size: .72rem; transition: background .1s;
+}
+.result-item:hover { background: var(--pale); }
+
+/* ── SELECTED INGREDIENTS ── */
+.sel-list-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin: 10px 0 6px; font-size: .72rem; font-weight: 700;
+}
+.selected-list { max-height: 320px; overflow-y: auto; padding-right: 2px; }
+.ingr-card { background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 10px; margin-bottom: 6px; transition: border-color .15s; }
+.ingr-card:hover { border-color: var(--caramel); }
+.ingr-card.additive-card { background: rgba(42,107,82,.04); border-color: rgba(42,107,82,.3); }
+.ingr-card.emulsifier-card { background: rgba(212,168,67,.06); border-color: rgba(212,168,67,.35); }
+.ingr-card.protein-card { background: rgba(36,113,163,.05); border-color: rgba(36,113,163,.28); }
+.ingr-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.ingr-name { font-weight: 700; font-size: .73rem; }
+.ingr-cat-tag { font-size: .58rem; color: var(--steel); }
+.ingr-bottom { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ingr-qty-wrap { display: flex; align-items: center; gap: 4px; background: var(--pale); padding: 3px 9px; border-radius: 16px; }
+.ingr-qty-wrap input { width: 65px; padding: 3px; border: 1px solid var(--border); border-radius: 10px; text-align: center; font-family: 'DM Mono', monospace; font-size: .72rem; }
+.ingr-pct { font-size: .63rem; font-weight: 700; color: var(--mint); min-width: 44px; }
+.remove-btn { background: none; border: none; font-size: .9rem; cursor: pointer; color: var(--red); opacity: 0.55; transition: opacity .15s; }
+.remove-btn:hover { opacity: 1; }
+.badge { font-size: .5rem; font-weight: 800; padding: 1px 5px; border-radius: 6px; margin-left: 4px; vertical-align: middle; }
+.badge-stab { background: rgba(42,107,82,.15); color: var(--mint); }
+.badge-emu  { background: rgba(212,168,67,.22); color: #8B6914; }
+.badge-prot { background: rgba(36,113,163,.15); color: var(--blue); }
+.additive-group-label { font-size: .6rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; padding: 4px 8px; border-radius: 6px; margin: 8px 0 4px; }
+.agl-stab { color: var(--mint); background: rgba(42,107,82,.08); }
+.agl-emu  { color: #8B6914; background: rgba(212,168,67,.1); }
+.agl-prot { color: var(--blue); background: rgba(36,113,163,.08); }
+
+/* ── GAUGE CHARTS ── */
+.gauges-section { background: var(--card); border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 2px 14px var(--shadow); padding: 14px; margin-bottom: 16px; }
+.gauges-section h3 { font-family: 'Playfair Display', serif; font-size: .92rem; color: var(--choc2); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.gauges-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.gauge-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px 10px; background: var(--pale); border-radius: 13px; border: 1.5px solid var(--border); transition: border-color .2s; }
+.gauge-wrap:hover { border-color: var(--caramel); }
+.gauge-canvas-wrap { position: relative; width: 140px; height: 84px; }
+.gauge-canvas-wrap canvas { display: block; width: 140px; height: 84px; }
+.gauge-value-box { position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); background: var(--choc2); color: #fff; padding: 3px 12px; border-radius: 10px; font-family: 'DM Mono', monospace; font-size: .76rem; font-weight: 700; white-space: nowrap; min-width: 66px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,.25); letter-spacing: .02em; }
+.gauge-title { font-size: .67rem; font-weight: 800; color: var(--choc2); text-align: center; text-transform: uppercase; letter-spacing: .07em; }
+.gauge-status { font-size: .63rem; font-weight: 800; text-align: center; padding: 3px 10px; border-radius: 10px; width: 100%; letter-spacing: .03em; }
+.status-low    { background: rgba(30,132,73,.18); color: #145a2e; }
+.status-ok     { background: rgba(200,135,74,.25); color: #6b3d00; }
+.status-high   { background: rgba(192,57,43,.18); color: #7a1208; }
+.status-soft   { background: rgba(42,107,82,.18); color: #1a5e3a; }
+.status-hard   { background: rgba(192,57,43,.18); color: var(--red); }
+.status-scoopable { background: rgba(30,132,73,.18); color: #145a2e; }
+.status-veryhard  { background: rgba(120,20,10,.22); color: #6b0000; }
+.status-verysoft  { background: rgba(36,113,163,.18); color: #0d3d6b; }
+.gauge-range-row  { font-size: .57rem; color: var(--steel); text-align: center; line-height: 1.4; padding: 0 2px; }
+.gauge-note       { font-size: .58rem; color: var(--caramel); text-align: center; line-height: 1.45; padding: 3px 4px; border-radius: 7px; min-height: 0; font-style: italic; }
+.gauge-note.note-warn { background: rgba(192,57,43,.08); color: var(--red); font-style: normal; font-weight: 700; padding: 4px 6px; }
+.gauge-note.note-ok   { background: rgba(42,107,82,.08); color: var(--mint); font-style: normal; padding: 4px 6px; }
+
+/* ── RESULTS PANEL ── */
+.results-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 240px; color: var(--caramel); gap: 10px; font-size: .82rem; text-align: center; }
+.results-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.stat-card { background: var(--pale); border-radius: 9px; padding: 7px 5px; text-align: center; border: 1px solid var(--border); transition: transform .15s; }
+.stat-card:hover { transform: translateY(-1px); }
+.stat-val { font-family: 'DM Mono', monospace; font-size: .82rem; font-weight: 700; color: var(--choc2); line-height: 1.2; }
+.stat-label { font-size: .48rem; color: var(--steel); margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.freeze-note { background: linear-gradient(135deg, #EBF5F0, #F0FAF5); border-left: 4px solid var(--mint); padding: 14px; border-radius: 12px; margin: 14px 0; text-align: center; }
+.freeze-temp { font-size: 1.5rem; font-weight: 800; font-family: 'DM Mono', monospace; color: var(--mint); margin: 4px 0; text-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.macro-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: .68rem; }
+
+/* ── NUTRITION TABLE ── */
+.region-selector { display: flex; gap: 7px; margin: 12px 0; flex-wrap: wrap; justify-content: center; }
+.region-btn { padding: 4px 12px; background: var(--pale); border: 1.5px solid var(--border); border-radius: 20px; font-size: .63rem; cursor: pointer; font-weight: 600; font-family: 'Nunito', sans-serif; transition: all .15s; }
+.region-btn.active { background: var(--mint); color: white; border-color: var(--mint); }
+.nutrition-table { width: 100%; border-collapse: collapse; font-size: .63rem; margin-top: 8px; }
+.nutrition-table th { background: var(--pale); padding: 5px 7px; border-bottom: 2px solid var(--border); text-align: left; font-weight: 700; font-size: .58rem; text-transform: uppercase; color: var(--steel); }
+.nutrition-table td { padding: 4px 7px; border-bottom: 1px solid var(--border); }
+.nutrition-table td:not(:first-child) { font-family: 'DM Mono', monospace; text-align: right; }
+.nutrition-table tr:hover td { background: var(--pale); }
+
+/* export row */
+.export-btn-row { display: flex; gap: 7px; margin-top: 12px; flex-wrap: wrap; }
+.export-btn { flex: 1; min-width: 120px; padding: 8px 10px; border: none; border-radius: 9px; font-size: .7rem; font-weight: 700; cursor: pointer; font-family: 'Nunito', sans-serif; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all .18s; }
+.export-btn.epdf  { background: rgba(192,57,43,.1); color: var(--red); border: 1.5px solid rgba(192,57,43,.3); }
+.export-btn.epdf:hover { background: var(--red); color: #fff; }
+.export-btn.exls  { background: rgba(30,132,73,.1); color: var(--green); border: 1.5px solid rgba(30,132,73,.3); }
+.export-btn.exls:hover { background: var(--green); color: #fff; }
+.export-btn.ecsv  { background: rgba(36,113,163,.1); color: var(--blue); border: 1.5px solid rgba(36,113,163,.3); }
+.export-btn.ecsv:hover { background: var(--blue); color: #fff; }
+
+/* ── STAB / EMU GRIDS ── */
+.item-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 6px; max-height: 380px; overflow-y: auto; padding-right: 3px; }
+.sel-item { border: 2px solid var(--border); border-radius: 9px; padding: 6px 7px; cursor: pointer; transition: all .14s; position: relative; background: var(--pale); }
+.sel-item:hover { border-color: var(--caramel); background: white; }
+.sel-item.on { border-color: var(--mint); background: rgba(42,107,82,.06); }
+.sel-item.on::after { content: '✓'; position: absolute; top: 3px; right: 6px; font-size: .55rem; color: var(--mint); font-weight: 800; }
+.sel-item.emu-on { border-color: var(--gold); background: rgba(212,168,67,.09); }
+.sel-item.emu-on::after { content: '✓'; position: absolute; top: 3px; right: 6px; font-size: .55rem; color: var(--gold); font-weight: 800; }
+.item-number { display: inline-block; background: var(--vanilla); border-radius: 8px; padding: 0 3px; font-size: .44rem; margin-right: 3px; color: var(--steel); font-weight: 700; }
+.iname { font-size: .67rem; font-weight: 700; color: var(--choc2); line-height: 1.25; }
+.itag { font-size: .54rem; color: var(--steel); margin-top: 2px; }
+.preset-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 9px; }
+.btn-sm { font-size: .6rem; padding: 3px 9px; border-radius: 7px; border: 1.5px solid var(--border); background: var(--pale); color: var(--steel); cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 600; transition: all .14s; }
+.btn-sm:hover { border-color: var(--caramel); color: var(--caramel); background: #fff; }
+.warn-msg { background: rgba(192,57,43,.08); border-left: 3px solid var(--red); padding: 7px 10px; margin-bottom: 7px; border-radius: 8px; font-size: .62rem; display: none; }
+.hlb-info-msg { background: rgba(212,168,67,.1); border-left: 3px solid var(--gold); padding: 7px 10px; margin-bottom: 7px; border-radius: 8px; font-size: .62rem; display: none; }
+
+/* ── STAB DETAIL ROWS ── */
+.detail-section { margin-top: 14px; }
+.detail-group-title { font-size: .65rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; padding: 5px 10px; border-radius: 7px; margin: 10px 0 6px; display: flex; justify-content: space-between; align-items: center; }
+.dgt-stab { background: rgba(42,107,82,.09); color: var(--mint); }
+.dgt-bulk { background: rgba(212,168,67,.12); color: #8B6914; }
+.dgt-prot { background: rgba(36,113,163,.1); color: var(--blue); }
+.dgt-emu  { background: rgba(212,168,67,.09); color: #8B6914; border: 1px solid rgba(212,168,67,.25); }
+.stab-detail-row { background: var(--pale); border: 1.5px solid var(--border); border-radius: 10px; padding: 9px 11px; margin-bottom: 6px; }
+.emu-detail-row  { background: rgba(212,168,67,.05); border: 1.5px solid rgba(212,168,67,.25); border-radius: 10px; padding: 9px 11px; margin-bottom: 6px; }
+.sdr-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.sdr-name { font-weight: 700; font-size: .72rem; color: var(--choc2); }
+.sdr-dose { text-align: right; }
+.sdr-pct { font-family: 'DM Mono', monospace; font-size: .7rem; color: var(--steel); }
+.sdr-grams { font-family: 'DM Mono', monospace; font-size: .8rem; font-weight: 700; color: var(--mint); }
+.sdr-grams-emu { font-family: 'DM Mono', monospace; font-size: .8rem; font-weight: 700; color: var(--gold); }
+.sdr-meta { font-size: .58rem; color: var(--steel); margin-bottom: 5px; display: flex; gap: 10px; flex-wrap: wrap; }
+.sdr-meta span { background: rgba(0,0,0,.04); padding: 1px 6px; border-radius: 6px; }
+.sdr-bar-wrap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.sdr-bar-label { font-size: .48rem; color: var(--steel); text-transform: uppercase; margin-bottom: 2px; }
+.sdr-bar { height: 4px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.sdr-bar-fill { height: 100%; border-radius: 3px; transition: width .4s; }
+.sdr-bar-val { font-size: .48rem; color: var(--steel); text-align: right; font-family: 'DM Mono', monospace; margin-top: 1px; }
+.sdr-notes { font-size: .59rem; color: var(--steel); margin-top: 6px; line-height: 1.45; padding-top: 6px; border-top: 1px dashed var(--border); }
+.sdr-hlb-badge { font-size: .55rem; font-weight: 700; background: rgba(212,168,67,.2); color: #7a5200; padding: 1px 7px; border-radius: 8px; margin-left: 6px; }
+.score-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 7px; margin: 12px 0; }
+.score-item { background: var(--pale); border-radius: 9px; padding: 7px 10px; border: 1px solid var(--border); }
+.score-label { font-size: .55rem; font-weight: 700; color: var(--steel); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+.score-bar { height: 5px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 3px; }
+.score-fill { height: 100%; border-radius: 4px; transition: width .5s; }
+.score-val { font-size: .6rem; font-family: 'DM Mono', monospace; text-align: right; font-weight: 700; }
+.synergy-box { background: linear-gradient(135deg, rgba(42,107,82,.07), rgba(212,168,67,.07)); border: 1.5px solid rgba(42,107,82,.2); border-radius: 10px; padding: 9px 12px; margin: 8px 0; font-size: .63rem; }
+.additive-summary-box { background: linear-gradient(135deg, rgba(42,107,82,.05), rgba(212,168,67,.05)); border: 1.5px solid rgba(42,107,82,.18); border-radius: 11px; padding: 11px 14px; margin: 10px 0; }
+.additive-summary-box h4 { font-size: .68rem; font-weight: 800; color: var(--mint); margin-bottom: 7px; }
+.sum-row { display: flex; justify-content: space-between; font-size: .64rem; padding: 3px 0; border-bottom: 1px dashed rgba(42,107,82,.12); }
+.sum-row:last-child { border-bottom: none; font-weight: 700; margin-top: 2px; }
+.hlb-indicator { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: rgba(212,168,67,.08); border-radius: 9px; margin-top: 8px; font-size: .62rem; }
+
+/* ── CALC BUTTONS ── */
+.btn-row { display: flex; gap: 8px; margin-top: 10px; }
+.btn-calc { flex: 1; padding: 9px; background: var(--choc2); color: var(--cream); font-family: 'Playfair Display', serif; font-size: .82rem; border: none; border-radius: 10px; cursor: pointer; transition: all .2s; }
+.btn-calc:hover { background: var(--caramel); transform: translateY(-1px); }
+.btn-auto { flex: 1; padding: 9px; background: linear-gradient(135deg, var(--gold), var(--gold2)); color: var(--choc2); font-family: 'Playfair Display', serif; font-size: .82rem; border: none; border-radius: 10px; cursor: pointer; transition: all .2s; font-weight: 700; }
+.btn-auto:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(212,168,67,.4); }
+
+/* ── MODAL (shared) ── */
+.modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.55); z-index: 10000;
+    align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+    background: #fff; border-radius: 16px; padding: 24px 26px;
+    width: 92%; max-width: 460px; max-height: 88vh; overflow-y: auto;
+    box-shadow: 0 12px 50px rgba(0,0,0,.3);
+}
+.modal-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--choc2); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+.modal-close { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #999; line-height: 1; }
+.modal-label { font-size: .72rem; font-weight: 700; color: var(--steel); display: block; margin-bottom: 5px; }
+.modal-input { width: 100%; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 9px; font-size: .82rem; font-family: 'Nunito', sans-serif; margin-bottom: 12px; }
+.modal-input:focus { outline: none; border-color: var(--caramel); }
+.modal-check-row { display: flex; align-items: center; gap: 8px; font-size: .72rem; color: var(--steel); margin-bottom: 14px; cursor: pointer; }
+.modal-check-row input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; }
+.modal-btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+.modal-btn { padding: 8px 20px; border-radius: 9px; font-size: .76rem; font-weight: 700; cursor: pointer; font-family: 'Nunito', sans-serif; border: none; transition: all .15s; }
+.modal-btn.cancel { background: var(--pale); border: 1.5px solid var(--border); color: var(--steel); }
+.modal-btn.save   { background: var(--caramel); color: #fff; }
+.modal-btn.delete { background: var(--red); color: #fff; }
+
+/* Recipe list items in load modal */
+.recipe-item {
+    padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+    margin-bottom: 8px; cursor: pointer; transition: border-color .15s;
+    background: var(--pale); display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+}
+.recipe-item:hover { border-color: var(--caramel); background: #fff; }
+.recipe-item-info { flex: 1; min-width: 0; }
+.recipe-item-name { font-weight: 700; font-size: .8rem; color: var(--choc2); }
+.recipe-item-meta { font-size: .62rem; color: var(--steel); margin-top: 3px; }
+.recipe-item-sub  { font-size: .58rem; color: var(--caramel); margin-top: 2px; }
+.recipe-del-btn { background: none; border: 1.5px solid rgba(192,57,43,.3); border-radius: 7px; padding: 4px 9px; font-size: .65rem; color: var(--red); cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all .15s; }
+.recipe-del-btn:hover { background: var(--red); color: #fff; }
+
+/* ── UNIT TOGGLE ── */
+.unit-toggle-wrap {
+    display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+    background: rgba(255,255,255,.12); border-radius: 16px; padding: 3px 9px;
+}
+.unit-lbl { color: var(--gold2); font-size: .7rem; font-weight: 800; font-family: 'DM Mono', monospace; min-width: 20px; text-align: center; }
+.toggle-track {
+    position: relative; display: inline-block;
+    width: 44px; height: 24px; cursor: pointer;
+}
+.toggle-track input { opacity: 0; width: 0; height: 0; }
+.toggle-track .toggle-inner {
+    position: absolute; inset: 0; background: rgba(255,255,255,.18);
+    border-radius: 24px; transition: background .2s;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 5px; font-size: .52rem; font-weight: 800;
+}
+.toggle-track input:checked ~ .toggle-inner { background: var(--caramel); }
+.toggle-track .toggle-knob {
+    position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px; background: #fff; border-radius: 50%;
+    transition: transform .2s; box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+.toggle-track input:checked ~ .toggle-knob { transform: translateX(20px); }
+.toggle-inner .tc { color: rgba(255,255,255,.9); }
+.toggle-inner .tf { color: rgba(255,255,255,.45); }
+.toggle-track input:checked ~ .toggle-inner .tc { color: rgba(255,255,255,.45); }
+.toggle-track input:checked ~ .toggle-inner .tf { color: rgba(255,255,255,.9); }
+
+/* ── FREEZE CURVE CHART ── */
+.freeze-chart-card {
+    background: var(--card); border-radius: 14px; border: 1px solid var(--border);
+    box-shadow: 0 2px 14px var(--shadow); padding: 16px; margin-bottom: 16px;
+}
+.freeze-chart-card h3 {
+    font-family: 'Playfair Display', serif; font-size: .9rem; color: var(--choc2);
+    font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+}
+.chart-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .6rem; color: var(--steel); margin-bottom: 10px; }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 22px; height: 3px; border-radius: 2px; }
+.legend-dot.circle { width: 10px; height: 10px; border-radius: 50%; }
+.chart-wrap { position: relative; background: #1a1e2e; border-radius: 10px; padding: 8px; height: 420px; }
+.chart-subtitle { font-size: .62rem; color: var(--steel); text-align: center; margin-top: 8px; font-style: italic; line-height:1.5; }
+
+/* ── INGREDIENT EDITOR MODAL ── */
+.modal-box-wide { max-width: 820px; width: 96%; }
+.ing-ed-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+.ing-ed-search { flex: 1; min-width: 160px; padding: 7px 12px; border: 1.5px solid var(--border); border-radius: 20px; font-size: .72rem; font-family: 'Nunito', sans-serif; }
+.ing-ed-search:focus { outline: none; border-color: var(--caramel); }
+.ing-table-wrap { max-height: 260px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; }
+.ing-table { width: 100%; border-collapse: collapse; font-size: .64rem; }
+.ing-table th { background: var(--pale); padding: 5px 7px; border-bottom: 2px solid var(--border); text-align: left; font-size: .58rem; font-weight: 700; text-transform: uppercase; color: var(--steel); position: sticky; top: 0; }
+.ing-table td { padding: 4px 7px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.ing-table tr:hover td { background: rgba(212,168,67,.07); }
+.ing-ed-btn { border: none; border-radius: 7px; padding: 3px 9px; font-size: .62rem; cursor: pointer; font-weight: 700; font-family: 'Nunito', sans-serif; transition: all .12s; margin-right: 3px; }
+.ing-ed-btn.edit { background: rgba(36,113,163,.12); color: var(--blue); }
+.ing-ed-btn.edit:hover { background: var(--blue); color: #fff; }
+.ing-ed-btn.del { background: rgba(192,57,43,.1); color: var(--red); }
+.ing-ed-btn.del:hover { background: var(--red); color: #fff; }
+.ing-form-box { background: var(--pale); border: 1.5px solid var(--caramel); border-radius: 12px; padding: 14px; }
+.ing-form-box h4 { font-size: .78rem; font-weight: 800; color: var(--choc2); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.ing-form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.ing-form-field { display: flex; flex-direction: column; gap: 3px; }
+.ing-form-field label { font-size: .55rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--steel); }
+.ing-form-field input, .ing-form-field select { padding: 5px 8px; border: 1.5px solid var(--border); border-radius: 7px; font-size: .72rem; font-family: 'DM Mono', monospace; background: white; }
+.ing-form-field input:focus, .ing-form-field select:focus { outline: none; border-color: var(--caramel); }
+.ing-form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+
+/* ── TOAST ── */
+#toastMsg { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--mint); color: white; padding: 7px 20px; border-radius: 24px; font-size: .7rem; font-weight: 700; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 9999; box-shadow: 0 4px 14px rgba(0,0,0,.2); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) { .grid-main { grid-template-columns: 1fr; } .gauges-grid { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 700px) {
+    .results-grid { grid-template-columns: repeat(2,1fr); }
+    .item-grid { grid-template-columns: 1fr; }
+    .gauges-grid { grid-template-columns: repeat(2,1fr); }
+    .tbtn { width: calc(50% - 4px); min-width: unset; }
+}
+    </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="site-header">
+    <div class="header-inner">
+        <div class="header-logo">🍦</div>
+        <div class="header-title">
+            <h1>Gelato · Ice Cream · Stabiliser &amp; Emulsifier Formulator</h1>
+            <div class="header-title-row2">
+                <p>by Nitin Shah &nbsp;·&nbsp; PAC / POD &nbsp;·&nbsp; Freezing Point &amp; Serving Temperature &nbsp;·&nbsp; 45+ Stabilisers &nbsp;·&nbsp; 17+ Emulsifiers &nbsp;·&nbsp; Auto-Population &nbsp;·&nbsp; Nutrition &nbsp;·&nbsp; PDF &amp; Excel Export</p>
+                <!-- °C / °F TOGGLE — inline with description -->
+                <div class="unit-toggle-wrap">
+                    <span class="unit-lbl" id="unitLbl">°C</span>
+                    <label class="toggle-track" title="Switch °C / °F">
+                        <input type="checkbox" id="unitToggle" onchange="applyUnitToggle()">
+                        <span class="toggle-inner"><span class="tc">°C</span><span class="tf">°F</span></span>
+                        <span class="toggle-knob"></span>
+                    </label>
+                </div>
+                <!-- HF TOGGLE — Corvitto hardening factor on/off -->
+                <div class="unit-toggle-wrap" title="HF (Hardening Factor): when ON, Corvitto's HF correction is applied to freezing point calculations">
+                    <span class="unit-lbl" id="hfLbl" style="min-width:26px;font-size:.62rem">HF</span>
+                    <label class="toggle-track">
+                        <input type="checkbox" id="hfToggle" checked onchange="applyHFToggle()">
+                        <span class="toggle-inner"><span class="tc" style="font-size:.48rem">ON</span><span class="tf" style="font-size:.48rem">OFF</span></span>
+                        <span class="toggle-knob"></span>
+                    </label>
+                    <span style="font-size:.58rem;color:rgba(255,255,255,.6);white-space:nowrap">Corvitto HF</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- ═══ TOOLBAR (FIX #5: all equal size) ═══ -->
+<div class="toolbar">
+    <button class="tbtn tbtn-accent" id="saveRecipeBtn">💾 Save Recipe</button>
+    <button class="tbtn tbtn-accent" id="loadRecipeBtn">📂 Load Recipe</button>
+    <button class="tbtn tbtn-accent" id="editIngBtn">🥄 Edit Ingredients</button>
+    <button class="tbtn" id="exportCSVBtn">📎 Export CSV</button>
+    <button class="tbtn" id="exportExcelBtn">📊 Export Excel</button>
+    <button class="tbtn" id="exportPDFBtn">📄 Export PDF</button>
+    <button class="tbtn" id="printLabelBtn">🏷️ Print Label</button>
+    <button class="tbtn tbtn-accent" id="recalcBtn">🔬 Recalculate</button>
+    <button class="tbtn tbtn-accent" id="autoFormulateBtn">✨ Auto Formulate</button>
+</div>
+
+<div class="page-wrap">
+<div class="grid-main">
+
+<!-- ════ LEFT COLUMN ════ -->
+<div>
+
+<!-- CARD 1 -->
+<div class="card">
+    <div class="card-header"><span class="card-header-icon">⚙️</span><h2>1. Machine, Batch &amp; Process</h2></div>
+    <div class="card-body">
+        <div class="section-label">Machine</div>
+        <div class="fields-full" style="margin-bottom:10px">
+            <div class="field">
+                <label>Machine Type</label>
+                <select id="machineType">
+                    <option value="wand">Wand / Shaver (236g)</option>
+                    <option value="ninja">Ninja Creami (473g)</option>
+                    <option value="creami_deluxe">Creami Deluxe (710g)</option>
+                    <option value="pacojet">Pacojet (800g)</option>
+                    <option value="frozen_bowl">Frozen Bowl (650g)</option>
+                    <option value="batch" selected>Batch Freezer (1000g)</option>
+                    <option value="continuous">Continuous Freezer (1000g)</option>
+                    <option value="softserve">Soft Serve (2000g)</option>
+                    <option value="popsicle">Popsicle / Ice Pop (1000g)</option>
+                    <option value="nochurn">No-Churn (1000g)</option>
+                </select>
+            </div>
+        </div>
+        <div class="section-label">Batch &amp; Process</div>
+        <div class="fields-2col" style="margin-bottom:10px">
+            <div class="field"><label>Batch Size (g)</label><input type="number" id="batchSize" value="1000" step="50"></div>
+            <div class="field"><label>Process Type</label>
+                <select id="processType"><option value="hot">Hot Process</option><option value="cold">Cold Process</option></select>
+            </div>
+        </div>
+        <div class="section-label">Storage</div>
+        <div class="fields-2col" style="margin-bottom:10px">
+            <div class="field"><label id="storageTempLabel">Storage Temp (°C)</label><input type="number" id="storageTemp" value="-11" step="1"></div>
+            <div class="field"><label>Shelf Life (months)</label><input type="number" id="shelfLife" value="3"></div>
+        </div>
+        <div class="section-label">Freezing &amp; Aeration</div>
+        <div class="fields-2col" style="margin-bottom:10px">
+            <div class="field">
+                <label>🎯 Target Frozen Water %</label>
+                <input type="number" id="frozenWaterTarget" value="75" step="5">
+                <span class="hint">Gelato 69% · Ice Cream 75%</span>
+            </div>
+            <div class="field">
+                <label>Overrun %</label>
+                <input type="number" id="overrun" value="80" step="5">
+                <span class="hint">Soft serve 60-100% · Gelato 20-40%</span>
+            </div>
+        </div>
+        <div class="section-label">Serving</div>
+        <div style="max-width:210px; margin-bottom:10px">
+            <div class="field"><label>Serving Size (g)</label><input type="number" id="servingSize" value="100" step="10"></div>
+        </div>
+        <div id="batchWarning" class="batch-warning" style="display:none"></div>
+        <!-- FIX #1: weight totals box with dual sync -->
+        <div class="weight-totals-box" id="weightTotalsBox">
+            <div class="wt-row" id="weightTotalsRow"></div>
+            <div class="sync-row" id="syncBtnsRow"></div>
+        </div>
+    </div>
+</div>
+
+<!-- CARD 2 -->
+<div class="card">
+    <div class="card-header"><span class="card-header-icon">📂</span><h2>2. Ingredient Database &amp; Selection</h2></div>
+    <div class="card-body">
+        <div class="csv-zone">
+            <label for="csvUpload">📁 Upload your Ingredients.csv to replace default →</label>
+            <input type="file" id="csvUpload" accept=".csv" style="margin-top:5px;display:block">
+            <p style="margin-top:6px;color:var(--steel)">✓ Default: <strong><span id="ingCount">0</span> ingredients</strong> loaded</p>
+        </div>
+        <div class="search-flex">
+            <div style="flex:2;position:relative;display:flex;align-items:center;">
+                <input type="text" id="searchInput" placeholder="🔍  Search ingredient..." style="width:100%;padding-right:26px;">
+                <button onclick="document.getElementById('searchInput').value='';filterIngredients();" title="Clear search"
+                    style="position:absolute;right:7px;background:none;border:none;cursor:pointer;font-size:.85rem;color:#aaa;line-height:1;padding:0;" id="searchClearBtn">✕</button>
+            </div>
+            <select id="categoryFilter"><option value="">All categories</option></select>
+        </div>
+        <div class="search-results" id="searchResultsList"></div>
+        <div class="sel-list-header">
+            <span>📋 Selected Ingredients</span>
+            <button class="tbtn" id="clearAllBtn" style="width:90px;min-width:90px;height:28px;font-size:.6rem">Clear All</button>
+        </div>
+        <div class="selected-list" id="selectedIngredientsContainer">
+            <div style="text-align:center;padding:12px;color:#aaa;font-size:.72rem">No ingredients added yet</div>
+        </div>
+    </div>
+</div>
+
+</div><!-- end left -->
+
+<!-- ════ RIGHT COLUMN ════ -->
+<div>
+
+<!-- GAUGES -->
+<div class="gauges-section" id="gaugesSection" style="display:none">
+    <h3>📊 Key Metrics Dashboard</h3>
+    <div class="gauges-grid">
+
+        <!-- SWEETNESS -->
+        <div class="gauge-wrap">
+            <div class="gauge-canvas-wrap"><canvas id="gaugeSweetness"></canvas><div class="gauge-value-box" id="gaugeSweetnessVal">—</div></div>
+            <div class="gauge-title">Sweetness (POD×10)</div>
+            <div class="gauge-status" id="gaugeSweetnessStatus">—</div>
+            <div class="gauge-range-row" id="gaugeSweetnessRange"></div>
+            <div class="gauge-note" id="gaugeSweetnessNote"></div>
+        </div>
+
+        <!-- SCOOPABILITY -->
+        <div class="gauge-wrap gauge-wrap-wide">
+            <div class="gauge-canvas-wrap"><canvas id="gaugeScoopability"></canvas><div class="gauge-value-box" id="gaugeScoopabilityVal">—</div></div>
+            <div class="gauge-title">Serving Temp vs Scoopability</div>
+            <div class="gauge-status" id="gaugeScoopabilityStatus">—</div>
+            <div class="gauge-range-row" id="gaugeScoopabilityRange"></div>
+            <div class="gauge-note" id="gaugeScoopabilityNote"></div>
+        </div>
+
+        <!-- GLYCEMIC INDEX -->
+        <div class="gauge-wrap">
+            <div class="gauge-canvas-wrap"><canvas id="gaugeGI"></canvas><div class="gauge-value-box" id="gaugeGIVal">—</div></div>
+            <div class="gauge-title">Glycemic Index</div>
+            <div class="gauge-status" id="gaugeGIStatus">—</div>
+            <div class="gauge-range-row">Low &lt;55 · Med 55–69 · High &gt;69</div>
+            <div class="gauge-note" id="gaugeGINote"></div>
+        </div>
+
+        <!-- GLYCEMIC LOAD -->
+        <div class="gauge-wrap">
+            <div class="gauge-canvas-wrap"><canvas id="gaugeGL"></canvas><div class="gauge-value-box" id="gaugeGLVal">—</div></div>
+            <div class="gauge-title">Glycemic Load / serving</div>
+            <div class="gauge-status" id="gaugeGLStatus">—</div>
+            <div class="gauge-range-row">Low &lt;10 · Med 10–19 · High &gt;19</div>
+            <div class="gauge-note" id="gaugeGLNote"></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- FREEZE CURVE CHART -->
+<div class="freeze-chart-card" id="freezeChartCard" style="display:none">
+    <h3>📈 Freezing Point &amp; Serving Temperature Chart</h3>
+    <div class="chart-wrap" style="height:420px"><canvas id="freezeCurveChart"></canvas></div>
+    <div class="chart-subtitle" id="freezeChartNote"></div>
+</div>
+
+<!-- FORMULATION RESULTS -->
+<div class="card">
+    <div class="card-header"><span class="card-header-icon">📊</span><h2>Formulation Results</h2></div>
+    <div class="card-body" id="resultsPanel">
+        <div class="results-placeholder"><div style="font-size:2.5rem">🍨</div><p>Add ingredients &amp; quantities to see results</p></div>
+    </div>
+    <div style="padding:0 14px 14px">
+        <div class="btn-row">
+            <button class="btn-calc" id="recalcBtn2">🔬 Recalculate</button>
+            <button class="btn-auto" id="autoFormulateBtn2">✨ Auto Formulate</button>
+        </div>
+    </div>
+</div>
+
+<!-- STABILISERS -->
+<div class="card">
+    <div class="card-header"><span class="card-header-icon">🧪</span><h2>3. Stabilisers &amp; Proteins (45+)</h2></div>
+    <div class="card-body">
+        <div id="stabValidationMsg" class="warn-msg"></div>
+        <div class="preset-row" id="stabPresets">
+            <button class="btn-sm" data-preset="clear">✕ Clear</button>
+            <button class="btn-sm" data-preset="premium">⭐ Premium</button>
+            <button class="btn-sm" data-preset="sorbet">🍧 Sorbet</button>
+            <button class="btn-sm" data-preset="gelato">🍨 Gelato</button>
+            <button class="btn-sm" data-preset="kulfi">🥛 Kulfi</button>
+            <button class="btn-sm" data-preset="dondurma">🎪 Dondurma</button>
+            <button class="btn-sm" data-preset="mochi">🍡 Mochi</button>
+            <button class="btn-sm" data-preset="commercial">🏭 Commercial</button>
+            <button class="btn-sm" data-preset="highprotein">💪 High Protein</button>
+        </div>
+        <div id="stabGrid" class="item-grid"></div>
+    </div>
+</div>
+
+<!-- EMULSIFIERS -->
+<div class="card">
+    <div class="card-header"><span class="card-header-icon">⚡</span><h2>4. Emulsifiers (17+)</h2></div>
+    <div class="card-body">
+        <div id="emuHLBWarning" class="hlb-info-msg"></div>
+        <div class="preset-row" id="emuPresets">
+            <button class="btn-sm" data-emu-preset="clear">✕ Clear</button>
+            <button class="btn-sm" data-emu-preset="standard">Standard</button>
+            <button class="btn-sm" data-emu-preset="natural">🌿 Natural</button>
+            <button class="btn-sm" data-emu-preset="pro">🚀 Pro Aeration</button>
+        </div>
+        <div id="emuGrid" class="item-grid"></div>
+    </div>
+</div>
+
+</div><!-- end right -->
+</div><!-- end grid-main -->
+</div><!-- end page-wrap -->
+
+<div id="toastMsg"></div>
+
+<!-- ═══ INGREDIENT EDITOR MODAL ═══ -->
+<div class="modal-overlay" id="ingEditorModal">
+    <div class="modal-box modal-box-wide">
+        <div class="modal-title">🥄 Ingredient Database Editor
+            <button class="modal-close" onclick="closeModal('ingEditorModal')">✕</button>
+        </div>
+        <div class="ing-ed-toolbar">
+            <input type="text" class="ing-ed-search" id="ingEdSearch" placeholder="🔍 Search name or category..." oninput="renderIngTable(this.value)">
+            <button class="modal-btn save" onclick="showIngForm()">➕ Add New</button>
+            <button class="modal-btn" style="background:var(--mint);color:#fff" onclick="exportIngDB()">⬇️ Export DB</button>
+        </div>
+        <div class="ing-table-wrap">
+            <table class="ing-table">
+                <thead><tr>
+                    <th>Name</th><th>Category</th><th>Energy</th><th>Water%</th><th>Fat%</th><th>Carbs%</th><th>Protein%</th><th>PAC</th><th>POD</th><th>HF</th><th>Actions</th>
+                </tr></thead>
+                <tbody id="ingEditorBody"></tbody>
+            </table>
+        </div>
+        <!-- Add / Edit Form -->
+        <div class="ing-form-box" id="ingFormBox" style="display:none">
+            <h4 id="ingFormTitle">➕ Add New Ingredient</h4>
+            <div class="ing-form-grid">
+                <div class="ing-form-field" style="grid-column:span 2"><label>Name *</label><input id="ifName" placeholder="e.g. Oat milk"></div>
+                <div class="ing-form-field"><label>Category *</label>
+                    <select id="ifCategory">
+                        <option value="">— select —</option>
+                        <option>Dairy</option><option>Sugar</option><option>Fruit</option><option>Nut</option>
+                        <option>Chocolate</option><option>Oil</option><option>Egg</option><option>Alcohol</option>
+                        <option>Flavour</option><option>Other</option>
+                    </select>
+                </div>
+                <div class="ing-form-field"><label>Energy (kcal)</label><input id="ifEnergy" type="number" value="0"></div>
+                <div class="ing-form-field"><label>Water %</label><input id="ifWater" type="number" value="0" step="0.1"></div>
+                <div class="ing-form-field"><label>Total Fat %</label><input id="ifFat" type="number" value="0" step="0.1"></div>
+                <div class="ing-form-field"><label>Sat. Fat %</label><input id="ifSatFat" type="number" value="0" step="0.1"></div>
+                <div class="ing-form-field"><label>Carbohydrates %</label><input id="ifCarbs" type="number" value="0" step="0.1"></div>
+                <div class="ing-form-field"><label>Total Sugars %</label><input id="ifSugars" type="number" value="0" step="0.1"></div>
+                <div class="ing-form-field"><label>Fiber %</label><input id="ifFiber" type="number" value="0" step="0.1"></div>
+                <div class="ing-form-field"><label>Protein %</label><input id="ifProtein" type="number" value="0" step="0.1"></div>
+                <div class="ing-form-field"><label>Salt %</label><input id="ifSalt" type="number" value="0" step="0.01"></div>
+                <div class="ing-form-field"><label>Calcium (mg)</label><input id="ifCalcium" type="number" value="0"></div>
+                <div class="ing-form-field"><label>MSNF %</label><input id="ifMsnf" type="number" value="0" step="0.1"></div>
+                <div class="ing-form-field"><label>Alcohol %</label><input id="ifAlcohol" type="number" value="0" step="0.1"></div>
+                <div class="ing-form-field"><label>PAC</label><input id="ifPac" type="number" value="0" step="0.1"></div>
+                <div class="ing-form-field"><label>POD</label><input id="ifPod" type="number" value="0" step="0.1"></div>
+                <div class="ing-form-field"><label>HF</label><input id="ifHf" type="number" value="0" step="0.1"></div>
+                <div class="ing-form-field"><label>GI</label><input id="ifGi" type="number" value="0"></div>
+                <div class="ing-form-field"><label>Rate (₹/Kg)</label><input id="ifRate" type="number" value="0"></div>
+            </div>
+            <div class="ing-form-actions">
+                <button class="modal-btn cancel" onclick="cancelIngForm()">Cancel</button>
+                <button class="modal-btn save" onclick="saveIngForm()">💾 Save Ingredient</button>
+            </div>
+        </div>
+        <div class="modal-btn-row" style="margin-top:12px">
+            <button class="modal-btn cancel" onclick="closeModal('ingEditorModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ SAVE MODAL (FIX #2) ═══ -->
+<div class="modal-overlay" id="saveModal">
+    <div class="modal-box">
+        <div class="modal-title">💾 Save Recipe
+            <button class="modal-close" onclick="closeModal('saveModal')">✕</button>
+        </div>
+        <label class="modal-label" for="saveRecipeNameInput">Recipe Name *</label>
+        <input type="text" class="modal-input" id="saveRecipeNameInput" placeholder="e.g. Mango Gelato Premium">
+        <label class="modal-check-row">
+            <input type="checkbox" id="saveIncludeAdditives" checked>
+            Include auto-calculated Stabilisers, Emulsifiers &amp; Proteins in saved recipe
+        </label>
+        <div id="saveSummaryMsg" style="font-size:.68rem;color:var(--steel);margin-bottom:12px;padding:7px 10px;background:var(--pale);border-radius:8px;border:1px solid var(--border)"></div>
+        <div class="modal-btn-row">
+            <button class="modal-btn cancel" onclick="closeModal('saveModal')">Cancel</button>
+            <button class="modal-btn save" onclick="confirmSave()">💾 Save Recipe</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ LOAD MODAL (FIX #3) ═══ -->
+<div class="modal-overlay" id="loadModal">
+    <div class="modal-box">
+        <div class="modal-title">📂 Load Recipe
+            <button class="modal-close" onclick="closeModal('loadModal')">✕</button>
+        </div>
+        <div id="loadRecipeList" style="max-height:360px;overflow-y:auto">
+            <div style="text-align:center;padding:20px;color:#aaa">No saved recipes</div>
+        </div>
+        <div class="modal-btn-row" style="margin-top:12px">
+            <button class="modal-btn cancel" onclick="closeModal('loadModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// GLOBALS
+// ═══════════════════════════════════════
+let ingredientMaster=[], selectedIngredients=[], currentRegion='USA';
+let useFahrenheit = false;
+let useHF = true;        // HF toggle: when false, HF=0 in freezing point calculations
+let freezeCurveChart = null;
+let ingFormEditName = null; // null = add mode, string = edit mode
+const DV={
+    USA:   {energy:2000,fat:70,satFat:20,carbs:300,sugar:90,fiber:25,protein:50,salt:6,calcium:800},
+    EU:    {energy:2000,fat:70,satFat:20,carbs:300,sugar:90,fiber:25,protein:50,salt:6,calcium:800},
+    India: {energy:2000,fat:60,satFat:20,carbs:300,sugar:90,fiber:30,protein:60,salt:5,calcium:600}
+};
+
+// ═══════════════════════════════════════
+// MODAL HELPERS
+// ═══════════════════════════════════════
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+// ═══════════════════════════════════════
+// FEATURE 1: °C / °F TOGGLE
+// ═══════════════════════════════════════
+function cToF(c){ return c * 9/5 + 32; }
+function fToC(f){ return (f - 32) * 5/9; }
+function dispTemp(c){ return useFahrenheit ? cToF(c) : c; }
+function fmtTemp(c, dec=2){
+    return useFahrenheit ? cToF(c).toFixed(dec) + ' °F' : c.toFixed(dec) + ' °C';
+}
+function unitLabel(){ return useFahrenheit ? '°F' : '°C'; }
+function applyUnitToggle(){
+    useFahrenheit = document.getElementById('unitToggle').checked;
+    document.getElementById('unitLbl').textContent = useFahrenheit ? '°F' : '°C';
+    // Update storage temp label
+    const stl = document.getElementById('storageTempLabel');
+    if(stl) stl.textContent = `Storage Temp (${unitLabel()})`;
+    // Convert current storage temp value in the input
+    const stEl = document.getElementById('storageTemp');
+    const curVal = parseFloat(stEl.value);
+    if(!isNaN(curVal)){
+        stEl.value = useFahrenheit ? cToF(curVal).toFixed(1) : fToC(curVal).toFixed(1);
+    }
+    computeAll();
+}
+
+function applyHFToggle(){
+    useHF = document.getElementById('hfToggle').checked;
+    // Update label colour to give visual feedback
+    const lbl = document.getElementById('hfLbl');
+    if(lbl) lbl.style.color = useHF ? 'var(--gold2)' : 'rgba(255,255,255,.4)';
+    computeAll();
+}
+
+// ═══════════════════════════════════════
+// GAUGE DRAWING — HiDPI crisp rendering
+// ═══════════════════════════════════════
+function drawGauge(canvasId, value, segments, label, unit='') {
+    const c = document.getElementById(canvasId);
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const logW = 140, logH = 84;
+    c.width  = logW * dpr;
+    c.height = logH * dpr;
+    ctx.scale(dpr, dpr);
+    const cx = logW / 2, cy = logH - 10;
+    const rOuter = 58, rInner = 36;
+    ctx.clearRect(0, 0, logW, logH);
+    segments.forEach(seg => {
+        const sa = Math.PI + seg.from * Math.PI;
+        const ea = Math.PI + seg.to   * Math.PI;
+        ctx.beginPath();
+        ctx.arc(cx, cy, rOuter, sa, ea);
+        ctx.arc(cx, cy, rInner, ea, sa, true);
+        ctx.closePath();
+        ctx.fillStyle = seg.color;
+        ctx.fill();
+    });
+    ctx.beginPath();
+    ctx.arc(cx, cy, rOuter + 1.5, Math.PI, 0);
+    ctx.arc(cx, cy, rInner - 1.5, 0, Math.PI, true);
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(44,21,6,.10)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    segments.forEach(seg => {
+        [seg.from, seg.to].forEach(t => {
+            const a = Math.PI + t * Math.PI;
+            const x1 = cx + (rInner-1)*Math.cos(a), y1 = cy + (rInner-1)*Math.sin(a);
+            const x2 = cx + (rOuter+1)*Math.cos(a), y2 = cy + (rOuter+1)*Math.sin(a);
+            ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+            ctx.strokeStyle = 'rgba(44,21,6,.40)'; ctx.lineWidth = 1.5; ctx.stroke();
+        });
+    });
+    segments.forEach(seg => {
+        if (!seg.label) return;
+        const midPct = (seg.from + seg.to) / 2;
+        const midAngle = Math.PI + midPct * Math.PI;
+        const lr = (rOuter + rInner) / 2;
+        ctx.save();
+        ctx.fillStyle = 'rgba(44,21,6,.80)';
+        ctx.font = `700 7.5px 'Nunito', sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(seg.label, cx + lr * Math.cos(midAngle), cy + lr * Math.sin(midAngle));
+        ctx.restore();
+    });
+    const pct = Math.max(0, Math.min(1, value));
+    const needleAngle = Math.PI + pct * Math.PI;
+    const nLen = rOuter - 6;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.18)';
+    ctx.shadowBlur = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + nLen * Math.cos(needleAngle), cy + nLen * Math.sin(needleAngle));
+    ctx.strokeStyle = '#1a0a02';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(cx, cy, 5.5, 0, 2*Math.PI);
+    ctx.fillStyle = '#2C1506'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, 2*Math.PI);
+    ctx.fillStyle = '#fff'; ctx.fill();
+}
+
+function updateGauges(podValue, servingTemp, giValue, glValue, fatPct, machine, frozenWaterTarget, storageTemp) {
+    document.getElementById('gaugesSection').style.display = 'block';
+
+    // ══════════════════════════════════════════
+    // HELPER: draw arc-end range labels on canvas
+    // The canvas has already been scaled by devicePixelRatio inside drawGauge.
+    // We draw in physical pixels (already scaled) at arc endpoints.
+    // ══════════════════════════════════════════
+    function drawArcLabels(canvasId, leftLabel, rightLabel) {
+        const c = document.getElementById(canvasId); if (!c) return;
+        const ctx = c.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const logW = 140, logH = 84;
+        // canvas is scaled by dpr — draw in physical pixels
+        ctx.save();
+        ctx.font = `bold ${Math.round(6.5 * dpr)}px sans-serif`;
+        ctx.fillStyle = 'rgba(55,35,10,.65)';
+        ctx.textBaseline = 'bottom';
+        ctx.textAlign = 'left';
+        ctx.fillText(leftLabel, 2 * dpr, (logH - 1) * dpr);
+        ctx.textAlign = 'right';
+        ctx.fillText(rightLabel, (logW - 2) * dpr, (logH - 1) * dpr);
+        ctx.restore();
+    }
+
+    // ══════════════════════════════════════════
+    // 1. SWEETNESS GAUGE
+    // ══════════════════════════════════════════
+    // Product-type-specific sweet targets (POD×10 per 100g mix)
+    let sweetLow, sweetHigh, sweetProductLabel;
+    if (fatPct < 1) {
+        sweetLow = 170; sweetHigh = 260; sweetProductLabel = 'Sorbet target: 170–260';
+    } else if (fatPct < 8) {
+        sweetLow = 160; sweetHigh = 220; sweetProductLabel = 'Low-fat target: 160–220';
+    } else if (fatPct < 14) {
+        sweetLow = 150; sweetHigh = 200; sweetProductLabel = 'Medium-fat target: 150–200';
+    } else {
+        sweetLow = 140; sweetHigh = 180; sweetProductLabel = 'Premium target: 140–180';
+    }
+    const swMin = 100, swMax = Math.max(sweetHigh + 60, 320);
+    const swRange = swMax - swMin;
+    const swSegs = [
+        { from: 0,                           to: (sweetLow - swMin) / swRange,  color: '#6BAED6', label: 'Mild'  },
+        { from: (sweetLow - swMin) / swRange, to: (sweetHigh - swMin) / swRange, color: '#41AB5D', label: 'Sweet' },
+        { from: (sweetHigh - swMin) / swRange, to: 1,                           color: '#E3483A', label: 'Over'  }
+    ];
+    const swPct = Math.max(0, Math.min(1, (podValue * 10 - swMin) / swRange));
+    drawGauge('gaugeSweetness', swPct, swSegs, '');
+    drawArcLabels('gaugeSweetness', swMin.toString(), swMax.toString());
+    document.getElementById('gaugeSweetnessVal').textContent = (podValue * 10).toFixed(1);
+    let swStatus, swClass, swNote;
+    const swVal = podValue * 10;
+    if (swVal < sweetLow)        { swStatus = 'Under-sweet'; swClass = 'status-low';        swNote = 'Increase sugar or sweetener blend to reach target.'; }
+    else if (swVal <= sweetHigh) { swStatus = 'Sweet ✓';     swClass = 'status-scoopable';  swNote = sweetProductLabel; }
+    else                         { swStatus = 'Over-sweet!'; swClass = 'status-high';        swNote = 'Reduce sugars or switch to lower-POD sweeteners.'; }
+    document.getElementById('gaugeSweetnessStatus').textContent = swStatus;
+    document.getElementById('gaugeSweetnessStatus').className = 'gauge-status ' + swClass;
+    document.getElementById('gaugeSweetnessRange').textContent = sweetProductLabel;
+    const swNoteEl = document.getElementById('gaugeSweetnessNote');
+    swNoteEl.textContent = swNote;
+    swNoteEl.className = 'gauge-note ' + (swClass === 'status-scoopable' ? 'note-ok' : 'note-warn');
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 2. SCOOPABILITY / SERVING TEMP GAUGE
+    //
+    // KEY CONCEPT:
+    //   servingTemp is the CALCULATED temperature at which this product
+    //   ACHIEVES the target frozen water %. It is NOT a user input.
+    //
+    //   Each product type has an IDEAL scoopable temperature BAND defined
+    //   by a target frozen water % range.
+    //
+    //   If servingTemp is WARMER (less negative) than the ideal band:
+    //     → Product reaches target frozen water % too easily / at too warm a temp
+    //     → At the actual serving cabinet, it will be TOO HARD (over-frozen)
+    //     → Fix: reduce PAC / add more sugar / lower total solids
+    //
+    //   If servingTemp is COLDER (more negative) than the ideal band:
+    //     → Product needs a much lower temperature to reach target frozen water %
+    //     → At the actual serving cabinet it will be TOO SOFT (under-frozen)
+    //     → Fix: increase PAC / use higher-FP-depression sugars / add less water
+    //
+    //   If servingTemp is WITHIN the band → PERFECT / Scoopable ✓
+    //
+    // PRODUCT BANDS (per Nitin Shah specification):
+    //
+    //   Ice Cream       frozenTarget 74–76%  →  ideal band −16°C to −14°C
+    //     servingTemp warmer than −14°C  → composition freezes too easily → TOO HARD at cabinet
+    //     servingTemp colder than −16°C  → needs too much cold to freeze   → TOO SOFT at cabinet
+    //
+    //   Gelato / Sorbet frozenTarget 68–71%  →  ideal band −13°C to −11°C
+    //     warmer than −11°C → TOO HARD   |   colder than −13°C → TOO SOFT
+    //
+    //   Soft Serve      frozenTarget 50–60%  →  ideal band −8°C to −5°C
+    //     warmer than −5°C → TOO HARD    |   colder than −8°C → TOO SOFT
+    //
+    //   Kulfi/Popsicle  frozenTarget 77–82%  →  ideal band −10°C to −8°C
+    //     Served hard — no tempering advice needed
+    //     warmer than −8°C  → TOO HARD   |   colder than −10°C → TOO SOFT
+    //
+    // GAUGE: LEFT = SOFT (colder, more negative), RIGHT = HARD (warmer, less negative)
+    //   Needle moves RIGHT (warmer) = harder at cabinet
+    //   Needle moves LEFT  (colder) = softer at cabinet
+    // ══════════════════════════════════════════════════════════════════════
+
+    // ── Determine product band from frozenWaterTarget and machine ──
+    // All band values defined in °C; converted to display unit for labels/gauge
+    let scSoftEdge, scHardEdge, scMin, scMax, scProductLabel, scIsPopsicle;
+
+    if (machine === 'softserve' || (frozenWaterTarget >= 50 && frozenWaterTarget <= 60 && machine !== 'popsicle')) {
+        scSoftEdge = -5; scHardEdge = -8; scMin = -14; scMax = 0;
+        scIsPopsicle = false;
+    } else if (machine === 'popsicle' || (frozenWaterTarget >= 77 && frozenWaterTarget <= 82)) {
+        scSoftEdge = -8; scHardEdge = -10; scMin = -18; scMax = -2;
+        scIsPopsicle = true;
+    } else if (frozenWaterTarget >= 68 && frozenWaterTarget <= 71) {
+        scSoftEdge = -11; scHardEdge = -13; scMin = -20; scMax = -4;
+        scIsPopsicle = false;
+    } else if (frozenWaterTarget >= 74 && frozenWaterTarget <= 76) {
+        scSoftEdge = -14; scHardEdge = -16; scMin = -24; scMax = -6;
+        scIsPopsicle = false;
+    } else {
+        const centre = -12 + ((frozenWaterTarget - 70) / 5) * -3;
+        scSoftEdge = centre + 1; scHardEdge = centre - 1;
+        scMin = scHardEdge - 6; scMax = scSoftEdge + 6;
+        scIsPopsicle = false;
+    }
+
+    // Convert band edges + range to display unit for gauge rendering
+    const dSoftEdge = dispTemp(scSoftEdge);
+    const dHardEdge = dispTemp(scHardEdge);
+    const dScMin    = dispTemp(scMin);
+    const dScMax    = dispTemp(scMax);
+    const uSym      = unitLabel();
+
+    // Build product label in display unit
+    if (machine === 'softserve' || (frozenWaterTarget >= 50 && frozenWaterTarget <= 60 && machine !== 'popsicle')) {
+        scProductLabel = `Soft serve: ideal band ${dHardEdge.toFixed(1)}${uSym} to ${dSoftEdge.toFixed(1)}${uSym}`;
+    } else if (machine === 'popsicle' || (frozenWaterTarget >= 77 && frozenWaterTarget <= 82)) {
+        scProductLabel = `Kulfi / Popsicle: ideal band ${dHardEdge.toFixed(1)}${uSym} to ${dSoftEdge.toFixed(1)}${uSym} (served hard)`;
+    } else if (frozenWaterTarget >= 68 && frozenWaterTarget <= 71) {
+        scProductLabel = `Gelato / Sorbet: ideal band ${dHardEdge.toFixed(1)}${uSym} to ${dSoftEdge.toFixed(1)}${uSym}`;
+    } else if (frozenWaterTarget >= 74 && frozenWaterTarget <= 76) {
+        scProductLabel = `Ice Cream: ideal band ${dHardEdge.toFixed(1)}${uSym} to ${dSoftEdge.toFixed(1)}${uSym}`;
+    } else {
+        scProductLabel = `Target ${frozenWaterTarget}% frozen water: ideal ${dHardEdge.toFixed(1)}${uSym} to ${dSoftEdge.toFixed(1)}${uSym}`;
+    }
+
+    // servingTemp arrives in °C; convert to display for gauge and labels
+    const dServingTemp = dispTemp(servingTemp);
+    const dStorageTemp = dispTemp(storageTemp);
+
+    // Gauge needle: map display values linearly across display range
+    const scRange = dScMax - dScMin;
+    const scPctNeedle = Math.max(0, Math.min(1, (dServingTemp - dScMin) / scRange));
+
+    const hardEdgePct2 = (dHardEdge - dScMin) / scRange;
+    const softEdgePct2 = (dSoftEdge - dScMin) / scRange;
+    const scSegs = [
+        { from: 0,             to: hardEdgePct2, color: '#6BAED6', label: 'Soft'  },
+        { from: hardEdgePct2,  to: softEdgePct2, color: '#41AB5D', label: '✓'     },
+        { from: softEdgePct2,  to: 1,            color: '#E3483A', label: 'Hard'  }
+    ];
+    drawGauge('gaugeScoopability', scPctNeedle, scSegs, '');
+    drawArcLabels('gaugeScoopability',
+        'Cold ' + dScMin.toFixed(0) + uSym,
+        'Warm ' + dScMax.toFixed(0) + uSym
+    );
+    document.getElementById('gaugeScoopabilityVal').textContent = dServingTemp.toFixed(1) + uSym;
+
+    // ── Status logic (compare in °C internally) ──
+    let scStatus, scClass, scExplain;
+    if (servingTemp > scSoftEdge) {
+        scStatus  = 'Too Hard ❄️';
+        scClass   = 'status-hard';
+        scExplain = `Serving temp ${dServingTemp.toFixed(1)}${uSym} is warmer than ideal ${dSoftEdge.toFixed(1)}${uSym}. `
+                  + `PAC too low — mix doesn't depress freezing point enough. `
+                  + `Increase PAC: add more sugars or use higher-FP-depression sugars (dextrose, fructose, invert sugar).`;
+    } else if (servingTemp < scHardEdge) {
+        scStatus  = 'Too Soft / Runny 💧';
+        scClass   = 'status-soft';
+        scExplain = `Serving temp ${dServingTemp.toFixed(1)}${uSym} is colder than ideal ${dHardEdge.toFixed(1)}${uSym}. `
+                  + `PAC too high — mix over-depresses freezing point, stays too soft at serving cabinet. `
+                  + `Decrease PAC: reduce sugars or replace dextrose/fructose with sucrose.`;
+    } else {
+        scStatus  = 'Scoopable ✓';
+        scClass   = 'status-scoopable';
+        scExplain = `${scProductLabel}. Composition is perfectly balanced for scoopability.`;
+    }
+    document.getElementById('gaugeScoopabilityStatus').textContent = scStatus;
+    document.getElementById('gaugeScoopabilityStatus').className   = 'gauge-status ' + scClass;
+    document.getElementById('gaugeScoopabilityRange').textContent  = scProductLabel;
+
+    // ── Freezer vs cabinet tempering advice (all in display unit) ──
+    const diff = servingTemp - storageTemp; // °C difference
+    let freezerNote = '';
+    let freezerNoteClass = 'gauge-note';
+
+    if (scIsPopsicle) {
+        freezerNote = `Kulfi / Popsicle is served hard directly from the freezer (${dStorageTemp.toFixed(1)}${uSym}). No tempering required.`;
+        freezerNoteClass = 'gauge-note note-ok';
+    } else if (scClass !== 'status-scoopable') {
+        freezerNote = scExplain;
+        freezerNoteClass = 'gauge-note note-warn';
+    } else if (Math.abs(diff) <= 2) {
+        freezerNote = `Freezer ${dStorageTemp.toFixed(1)}${uSym} matches serving temp. Ready to scoop directly from freezer.`;
+        freezerNoteClass = 'gauge-note note-ok';
+    } else if (diff > 2) {
+        const mins = Math.round(diff * 2.5);
+        freezerNote = `Freezer ${dStorageTemp.toFixed(1)}${uSym} → Serving ${dServingTemp.toFixed(1)}${uSym}. `
+                    + `Rest product at fridge or room temp for ~${mins} min before scooping.`;
+        freezerNoteClass = 'gauge-note note-warn';
+    } else {
+        const mins = Math.round(Math.abs(diff) * 2);
+        freezerNote = `⚠️ Freezer ${dStorageTemp.toFixed(1)}${uSym} is warmer than serving temp ${dServingTemp.toFixed(1)}${uSym}. `
+                    + `Product may be too soft inside freezer. Chill for ~${mins} min before serving.`;
+        freezerNoteClass = 'gauge-note note-warn';
+    }
+    const scNoteEl = document.getElementById('gaugeScoopabilityNote');
+    scNoteEl.textContent = freezerNote;
+    scNoteEl.className   = freezerNoteClass;
+
+    // ══════════════════════════════════════════
+    // 3. GLYCEMIC INDEX GAUGE
+    // ══════════════════════════════════════════
+    const giSegs = [
+        { from: 0,     to: 0.55, color: '#41AB5D', label: 'Low'  },
+        { from: 0.55,  to: 0.69, color: '#F4C142', label: 'Med'  },
+        { from: 0.69,  to: 1,    color: '#E3483A', label: 'High' }
+    ];
+    drawGauge('gaugeGI', Math.max(0, Math.min(1, giValue / 100)), giSegs, '');
+    drawArcLabels('gaugeGI', '0', '100');
+    document.getElementById('gaugeGIVal').textContent = giValue.toFixed(1);
+    let giStatus, giClass, giNote;
+    if (giValue < 55)      { giStatus = 'Low GI ✓';   giClass = 'status-scoopable'; giNote = 'Low glycaemic impact. Suitable for reduced-sugar positioning.'; }
+    else if (giValue <= 69){ giStatus = 'Medium GI';  giClass = 'status-ok';        giNote = 'Moderate. Consider replacing some sucrose with low-GI sweeteners.'; }
+    else                   { giStatus = 'High GI';    giClass = 'status-high';      giNote = 'High impact. Replace sucrose with fructose, allulose or inulin to lower GI.'; }
+    document.getElementById('gaugeGIStatus').textContent = giStatus;
+    document.getElementById('gaugeGIStatus').className = 'gauge-status ' + giClass;
+    const giNoteEl = document.getElementById('gaugeGINote');
+    giNoteEl.textContent = giNote;
+    giNoteEl.className = 'gauge-note ' + (giClass === 'status-scoopable' ? 'note-ok' : '');
+
+    // ══════════════════════════════════════════
+    // 4. GLYCEMIC LOAD GAUGE
+    // ══════════════════════════════════════════
+    const glSegs = [
+        { from: 0,      to: 10/40, color: '#41AB5D', label: 'Low'  },
+        { from: 10/40,  to: 19/40, color: '#F4C142', label: 'Med'  },
+        { from: 19/40,  to: 1,     color: '#E3483A', label: 'High' }
+    ];
+    drawGauge('gaugeGL', Math.max(0, Math.min(1, glValue / 40)), glSegs, '');
+    drawArcLabels('gaugeGL', '0', '40+');
+    document.getElementById('gaugeGLVal').textContent = glValue.toFixed(2);
+    let glStatus, glClass, glNote;
+    if (glValue < 10)      { glStatus = 'Low GL ✓';  glClass = 'status-scoopable'; glNote = 'Excellent. Low total sugar impact per serving.'; }
+    else if (glValue <= 19){ glStatus = 'Medium GL'; glClass = 'status-ok';        glNote = 'Moderate per serving. Consider reducing serving size or sugar content.'; }
+    else                   { glStatus = 'High GL';   glClass = 'status-high';      glNote = 'High sugar load per serving. Reformulate with polyols, allulose or inulin.'; }
+    document.getElementById('gaugeGLStatus').textContent = glStatus;
+    document.getElementById('gaugeGLStatus').className = 'gauge-status ' + glClass;
+    const glNoteEl = document.getElementById('gaugeGLNote');
+    glNoteEl.textContent = glNote;
+    glNoteEl.className = 'gauge-note ' + (glClass === 'status-scoopable' ? 'note-ok' : '');
+}
+
+// ═══════════════════════════════════════
+// STABILISER DATA
+// ═══════════════════════════════════════
+const STABS = [
+    {num:1,id:'xanthan',name:'Xanthan Gum (E415)',tag:'Cold / universal',hydration:'Cold, needs shear',cls:'gum',cold:true,ft:90,mc:72,ic:88,tx:68,base:0.025,mn:0.010,mx:0.030,notes:'0.01–0.03% in blends. Cold-hydrating, shear-stable. Synergises strongly with LBG (+300%) and konjac (+400%). Do NOT use alone >0.03% — causes sliminess.'},
+    {num:2,id:'guar',name:'Guar Gum (E412)',tag:'Body control',hydration:'Cold, 10-15 min',cls:'gum',cold:true,ft:58,mc:64,ic:55,tx:74,base:0.065,mn:0.03,mx:0.10,notes:'0.03–0.10%. Fast cold hydration. Does NOT gel alone. Good for low-fat products. Exceeding 0.10% causes gumminess.'},
+    {num:3,id:'lgb',name:'Locust Bean Gum (E410)',tag:'Crystal control',hydration:'Heat 85-90°C',cls:'gum',cold:false,ft:82,mc:70,ic:90,tx:88,base:0.085,mn:0.05,mx:0.12,notes:'GOLD STANDARD. 0.05–0.12%. MUST be heated to 85–90°C. Synergises with carrageenan (+20%) and guar (+10%). Primary in premium gelato.'},
+    {num:4,id:'cmc',name:'CMC / Cellulose Gum (E466)',tag:'Meltdown control',hydration:'Cold, high shear',cls:'gum',cold:true,ft:74,mc:90,ic:78,tx:60,base:0.13,mn:0.06,mx:0.18,notes:'0.06–0.18%. Excellent meltdown & body. Cold soluble but needs high shear. AVOID >0.20% — waxy mouthfeel.'},
+    {num:5,id:'kappa',name:'Kappa Carrageenan (E407)',tag:'Dairy gel',hydration:'Heat 60-70°C',cls:'gum',cold:false,ft:52,mc:80,ic:65,tx:80,base:0.015,mn:0.008,mx:0.020,notes:'0.008–0.020% dairy ONLY. INEFFECTIVE IN SORBET. Very potent — overdose causes grittiness. Always pair with LBG.'},
+    {num:6,id:'lambda',name:'Lambda Carrageenan (E407)',tag:'Wheying-off prevention',hydration:'Cold, needs shear',cls:'gum',cold:true,ft:60,mc:85,ic:50,tx:88,base:0.020,mn:0.010,mx:0.030,notes:'0.01–0.03%. Non-gelling. Prevents wheying-off and phase separation. Best combined with LBG or guar.'},
+    {num:7,id:'iota',name:'Iota Carrageenan (E407)',tag:'Elastic gel',hydration:'Heat 60-70°C',cls:'gum',cold:false,ft:70,mc:72,ic:65,tx:84,base:0.025,mn:0.010,mx:0.040,notes:'0.01–0.04%. Elastic freeze-thaw stable gel (requires Ca²⁺). Better freeze-thaw than kappa.'},
+    {num:8,id:'tara',name:'Tara Gum (E417)',tag:'LBG alternative',hydration:'Heat 70-75°C',cls:'gum',cold:false,ft:75,mc:68,ic:80,tx:83,base:0.10,mn:0.05,mx:0.15,notes:'0.05–0.15%. Clean-label LBG alternative. Similar galactomannan structure. More cost-effective.'},
+    {num:9,id:'pectin',name:'HM Pectin (E440i)',tag:'Sorbet structure',hydration:'Hot 85°C',cls:'gum',cold:false,ft:48,mc:58,ic:52,tx:73,base:0.18,mn:0.10,mx:0.30,notes:'0.10–0.30%. REQUIRES pH<3.5 and sugar>55°Brix. Ideal for fruit sorbets.'},
+    {num:10,id:'agar',name:'Agar Agar (E406)',tag:'Firm gel',hydration:'Boil 90-95°C',cls:'gum',cold:false,ft:60,mc:85,ic:55,tx:65,base:0.12,mn:0.05,mx:0.25,notes:'0.05–0.25%. MUST BE BOILED. Very firm gel. Combine with LBG 0.05–0.10% to reduce brittleness.'},
+    {num:11,id:'alginate',name:'Sodium Alginate (E401)',tag:'Calcium reactive',hydration:'Cold',cls:'gum',cold:true,ft:78,mc:82,ic:85,tx:70,base:0.09,mn:0.05,mx:0.15,notes:'0.05–0.15%. Reacts with calcium. Disperse in sugar or oil before dairy contact.'},
+    {num:12,id:'konjac',name:'Konjac Glucomannan (E425)',tag:'Synergistic',hydration:'Cold/Warm',cls:'gum',cold:true,ft:80,mc:85,ic:75,tx:80,base:0.04,mn:0.02,mx:0.08,notes:'0.02–0.08%. EXCEPTIONAL synergy with xanthan (+400%). Very high MW — avoid overuse. Dondurma-like stretch.'},
+    {num:13,id:'tragacanth',name:'Tragacanth Gum (E413)',tag:'Acid stable',hydration:'Cold, 30-60min',cls:'gum',cold:true,ft:68,mc:62,ic:55,tx:78,base:0.12,mn:0.05,mx:0.20,notes:'0.05–0.20%. Highly acid-stable. Good for citrus sorbets. Slow hydration — soak required.'},
+    {num:14,id:'gellan',name:'Gellan Gum (E418)',tag:'Very potent',hydration:'Heat 70-80°C',cls:'gum',cold:false,ft:68,mc:74,ic:70,tx:65,base:0.010,mn:0.005,mx:0.020,notes:'0.005–0.020%. EXTREMELY POTENT. Requires cations for gelation. Very easy to overdose.'},
+    {num:15,id:'methylcellulose',name:'Methylcellulose (E461)',tag:'Reverse gelation',hydration:'Cold (must be cold!)',cls:'gum',cold:true,ft:85,mc:95,ic:75,tx:70,base:0.15,mn:0.10,mx:0.30,notes:'0.10–0.30%. Gels on HEATING, melts cold. MUST hydrate in cold water <10°C.'},
+    {num:16,id:'hpmc',name:'HPMC (E464)',tag:'Water balance / kulfi',hydration:'Cold',cls:'gum',cold:true,ft:82,mc:88,ic:80,tx:75,base:0.15,mn:0.10,mx:0.30,notes:'0.10–0.30%. Excellent water-binding. Ideal for kulfi slow-melt. Reduces ice crystal growth.'},
+    {num:17,id:'mastic',name:'Mastic Resin',tag:'Chewy / Dondurma',hydration:'Cold/Shear',cls:'gum',cold:true,ft:60,mc:85,ic:65,tx:95,base:0.03,mn:0.02,mx:0.05,notes:'0.02–0.05%. Traditional Greek/Turkish chewiness in Dondurma. Combine with konjac or salep.'},
+    {num:18,id:'betaglucan',name:'Beta-Glucan (Oat/Barley)',tag:'Soluble fiber',hydration:'Cold/Warm',cls:'gum',cold:true,ft:75,mc:70,ic:75,tx:80,base:0.20,mn:0.10,mx:0.30,notes:'0.10–0.30%. EU health claim at ≥3g/day. Slightly cereal flavour at higher doses.'},
+    {num:19,id:'fenugreek',name:'Fenugreek Gum (E499)',tag:'Traditional / kulfi',hydration:'Cold',cls:'gum',cold:true,ft:78,mc:72,ic:80,tx:82,base:0.10,mn:0.05,mx:0.15,notes:'0.05–0.15%. Galactomannan similar to guar. Traditional in Indian kulfi. Slight bitter note >0.12%.'},
+    {num:20,id:'cremodan',name:'Cremodan® SE 30',tag:'Complete system',hydration:'Hot/Cold',cls:'gum',cold:true,ft:88,mc:92,ic:85,tx:90,base:0.25,mn:0.15,mx:0.45,notes:'COMPLETE system (DuPont). Contains LBG+guar+carrageenan+emulsifiers. 0.20–0.40%.'},
+    {num:21,id:'grindsted',name:'Grindsted® IcePro',tag:'Industrial system',hydration:'Hot (80°C)',cls:'gum',cold:false,ft:85,mc:90,ic:88,tx:85,base:0.22,mn:0.12,mx:0.40,notes:'COMPLETE industrial system (IFF). Hot process only. 0.15–0.35%.'},
+    {num:22,id:'gelatin',name:'Gelatin (INS 441)',tag:'Classic melt/body',hydration:'Warm 50-60°C',cls:'bulk',cold:false,ft:75,mc:85,ic:70,tx:92,base:0.30,mn:0.10,mx:0.50,notes:'0.10–0.50%. NOT vegetarian. 200-250 bloom. Pre-soak 20 min cold water, dissolve 50–60°C.'},
+    {num:23,id:'cornstarch',name:'Corn Starch (native)',tag:'Traditional Sicilian gelato',hydration:'Cook 88-92°C',cls:'bulk',cold:false,ft:85,mc:70,ic:80,tx:78,base:3.0,mn:1.0,mx:4.0,notes:'1.0–4.0%. Cook to 88°C minimum. Retrograde staling on storage — use modified for longer shelf life.'},
+    {num:24,id:'tapioca',name:'Tapioca Starch',tag:'Stretchy / elastic',hydration:'Cook 60-70°C',cls:'bulk',cold:false,ft:82,mc:68,ic:75,tx:88,base:2.5,mn:1.0,mx:5.0,notes:'1.0–5.0%. Lower gelatinisation temp. Elastic stretchy texture — preferred in mochi/bingsu.'},
+    {num:25,id:'ricestarch',name:'Rice Starch',tag:'Finest grain / smooth',hydration:'Cook 75-80°C',cls:'bulk',cold:false,ft:80,mc:75,ic:80,tx:88,base:1.2,mn:0.5,mx:2.0,notes:'0.5–2.0%. Finest granule → very smooth mouthfeel. Waxy rice starch for freeze-thaw.'},
+    {num:26,id:'arrowroot',name:'Arrowroot Starch',tag:'Clean label / low temp',hydration:'Cook 60-65°C',cls:'bulk',cold:false,ft:78,mc:70,ic:80,tx:82,base:1.5,mn:0.5,mx:2.5,notes:'0.5–2.5%. Gelatinises at low temp. Clean flavour. Add late in cook to avoid thinning.'},
+    {num:27,id:'potatostarch',name:'Potato Starch',tag:'High viscosity / European',hydration:'Cook 58-67°C',cls:'bulk',cold:false,ft:80,mc:72,ic:75,tx:85,base:1.2,mn:0.5,mx:2.0,notes:'0.5–2.0%. High swelling. Common in European gelato. Prone to retrogradation.'},
+    {num:28,id:'modstarch',name:'Modified Pregelatinized Starch',tag:'Cold process / instant',hydration:'Cold (instant)',cls:'bulk',cold:true,ft:80,mc:75,ic:78,tx:80,base:1.5,mn:0.5,mx:3.0,notes:'0.5–3.0%. Pre-cooked — swells cold. Ideal for cold-process and no-churn.'},
+    {num:29,id:'salep',name:'Salep Flour (Authentic)',tag:'Dondurma / chewy',hydration:'Heat 75-80°C',cls:'bulk',cold:false,ft:85,mc:90,ic:80,tx:95,base:1.2,mn:0.5,mx:1.5,notes:'0.5–1.5%. Authentic Dondurma stretchiness. Requires CITES certification. Heat to 75°C min.'},
+    {num:30,id:'gumarabic',name:'Gum Arabic (E414)',tag:'Emulsifying / encapsulation',hydration:'Cold/Warm',cls:'bulk',cold:true,ft:65,mc:60,ic:50,tx:70,base:1.5,mn:0.5,mx:3.0,notes:'0.5–3.0%. Very low viscosity. Dual stabiliser+emulsifier. Encapsulates flavour compounds.'},
+    {num:31,id:'psyllium',name:'Psyllium Husk',tag:'Water binding / wand/Ninja',hydration:'Cold (immediate)',cls:'bulk',cold:true,ft:84,mc:76,ic:70,tx:62,base:0.25,mn:0.10,mx:0.60,notes:'0.10–0.60%. Excellent for Ninja Creami & Wand machines. Mix with dry ingredients first.'},
+    {num:32,id:'citrus',name:'Citrus Fiber (E440)',tag:'Clean label',hydration:'Cold',cls:'bulk',cold:true,ft:75,mc:80,ic:75,tx:75,base:0.30,mn:0.15,mx:0.60,notes:'0.15–0.60%. Natural water binder. Clean label. Slight citrus note — use in neutral/citrus flavours.'},
+    {num:33,id:'inulin',name:'Inulin / FOS (E1422)',tag:'Fat replacer / prebiotic',hydration:'Heat 60-70°C',cls:'bulk',cold:false,ft:42,mc:52,ic:38,tx:70,base:2.0,mn:0.5,mx:5.0,notes:'0.5–5.0%. Fat mouthfeel mimetic at 2–5%. Prebiotic. >5% may cause digestive discomfort.'},
+    {num:34,id:'sorbitol',name:'Sorbitol (E420)',tag:'Anti-crystallisation',hydration:'Cold',cls:'bulk',cold:true,ft:90,mc:60,ic:75,tx:85,base:3.0,mn:1.0,mx:5.0,notes:'1.0–5.0%. Strong FP depression. ⚠️ >3% per serving causes laxative effect. Must label.'},
+    {num:35,id:'glycerol',name:'Glycerol / Glycerine (E422)',tag:'Softener / FP depression',hydration:'Miscible',cls:'bulk',cold:true,ft:95,mc:50,ic:80,tx:90,base:1.5,mn:0.5,mx:3.0,notes:'0.5–3.0%. Extreme FP depression. ⚠️ Max 3% EU. Adds sweet warming note.'},
+    {num:36,id:'propylene',name:'Propylene Glycol (E1520)',tag:'Anti-freeze ⚠️ EU banned',hydration:'Miscible',cls:'bulk',cold:true,ft:85,mc:50,ic:70,tx:75,base:0.3,mn:0.2,mx:0.5,notes:'⚠️ NOT PERMITTED IN EU ice cream. USA industrial use only.'},
+    {num:37,id:'wpc',name:'Whey Protein Concentrate (WPC80)',tag:'Dairy protein / aeration',hydration:'Cold',cls:'protein',cold:true,ft:70,mc:85,ic:60,tx:85,base:1.5,mn:0.5,mx:4.0,notes:'0.5–4.0%. 80% protein. Foaming improves overrun. Contributes to MSNF. May cause Maillard.'},
+    {num:38,id:'wpi',name:'Whey Protein Isolate (WPI90)',tag:'High protein / low fat',hydration:'Cold',cls:'protein',cold:true,ft:72,mc:88,ic:62,tx:88,base:1.0,mn:0.3,mx:3.5,notes:'0.3–3.5%. 90%+ protein, minimal fat/lactose. Sandy texture if overdosed.'},
+    {num:39,id:'pea_protein',name:'Pea Protein Isolate (85%)',tag:'Plant protein / vegan',hydration:'Cold/Warm',cls:'protein',cold:true,ft:68,mc:82,ic:58,tx:82,base:1.8,mn:0.5,mx:4.5,notes:'0.5–4.5%. Neutral flavour at low levels. Combine with rice protein for complete amino acid.'},
+    {num:40,id:'soy_protein',name:'Soy Protein Isolate (SPI)',tag:'Plant emulsifier/protein',hydration:'Cold/Warm',cls:'protein',cold:true,ft:70,mc:84,ic:60,tx:84,base:1.5,mn:0.5,mx:4.0,notes:'0.5–4.0%. Contains natural lecithin. Major allergen — must declare.'},
+    {num:41,id:'rice_protein',name:'Rice Protein (80%)',tag:'Hypoallergenic / vegan',hydration:'Cold/Warm',cls:'protein',cold:true,ft:65,mc:78,ic:55,tx:78,base:1.8,mn:0.5,mx:4.5,notes:'0.5–4.5%. Hypoallergenic. Combine 1:1 with pea protein.'},
+    {num:42,id:'mcc',name:'Microcrystalline Cellulose (E460)',tag:'Fat mimetic / creamy',hydration:'Cold (high shear)',cls:'bulk',cold:true,ft:80,mc:85,ic:75,tx:85,base:0.25,mn:0.10,mx:0.50,notes:'0.10–0.50%. Creamy mouthfeel in reduced-fat. High shear needed. Often co-processed with CMC.'},
+    {num:43,id:'baobab',name:'Baobab Powder',tag:'Natural fiber / functional',hydration:'Cold/Warm',cls:'bulk',cold:true,ft:70,mc:72,ic:68,tx:75,base:1.5,mn:0.5,mx:3.0,notes:'0.5–3.0%. Natural pectin source. Slight caramel/citrus flavour. ≈45% dietary fiber.'},
+    {num:44,id:'oatfiber',name:'Oat Fiber (insoluble)',tag:'Keto / low-carb',hydration:'Cold (swells slowly)',cls:'bulk',cold:true,ft:72,mc:75,ic:68,tx:70,base:0.50,mn:0.20,mx:1.50,notes:'0.20–1.50%. Excellent keto/low-carb. May be grainy >1%. Combine with CMC.'},
+    {num:45,id:'yeast_protein',name:'Nutritional Yeast Protein',tag:'Umami / vegan protein',hydration:'Cold/Warm',cls:'protein',cold:true,ft:68,mc:80,ic:58,tx:80,base:1.2,mn:0.5,mx:3.5,notes:'0.5–3.5%. Complete amino acids. Umami note — savoury-sweet applications.'}
+];
+
+const EMUS = [
+    {num:1,id:'e471',name:'Mono & Diglycerides (E471)',tag:'Aeration / anti-bloom',hlb:3.5,base:0.20,mn:0.10,mx:0.25,cold:false,function:'Fat destabilisation, aeration, anti-shrinkage',notes:'0.10–0.25%. Heat 65–70°C. Best for high-fat (>8%). Promotes overrun. Most widely used globally.'},
+    {num:2,id:'ps80',name:'Polysorbate 80 (E433)',tag:'Fat destabilisation',hlb:15,base:0.04,mn:0.02,mx:0.05,cold:true,function:'Controlled fat destabilisation, low-fat systems',notes:'0.02–0.05%. HLB 15. Best for low-fat & non-dairy. Displaces protein from fat interface. Combine with MDG.'},
+    {num:3,id:'lactem',name:'LACTEM (E472b)',tag:'Cold aeration',hlb:8,base:0.15,mn:0.08,mx:0.20,cold:true,function:'Cold aeration, soft serve, no-churn',notes:'0.08–0.20%. HLB 8. Works cold. Ideal for soft serve and no-churn. Better cold solubility than MDG.'},
+    {num:4,id:'citrem',name:'CITREM (E472c)',tag:'Low-fat / acid stable',hlb:12,base:0.12,mn:0.08,mx:0.18,cold:true,function:'Acid-stable emulsification, sorbet',notes:'0.08–0.18%. HLB 12. Acid-stable → sorbet/fruit pH 3–5. Low-fat and vegan products.'},
+    {num:5,id:'acetem',name:'ACETEM (E472a)',tag:'Film-forming',hlb:4,base:0.10,mn:0.05,mx:0.15,cold:false,function:'Crystal film on ice, recrystallisation inhibition',notes:'0.05–0.15%. HLB 4. Forms film on ice crystals. Complements MDG in high-fat systems. Heat 60–65°C.'},
+    {num:6,id:'e475',name:'Polyglycerol Esters (E475)',tag:'Stable foam / aeration',hlb:8,base:0.12,mn:0.05,mx:0.25,cold:false,function:'Foam stabilisation, fine air cells',notes:'0.05–0.25%. Reduces air cell size → creamier texture. Heat 65°C. Synergises with DATEM.'},
+    {num:7,id:'pgme',name:'PGME (E477)',tag:'High overrun',hlb:9,base:0.12,mn:0.05,mx:0.25,cold:false,function:'High overrun, air cell stability',notes:'0.05–0.25%. Enhances overrun and air cell stability. Effective in soft serve >100% overrun.'},
+    {num:8,id:'datem',name:'DATEM (E472e)',tag:'Premium aeration',hlb:10,base:0.15,mn:0.08,mx:0.22,cold:false,function:'Premium aeration, protein interaction',notes:'0.08–0.22%. Strong protein interaction → high-solids mixes. Premium overrun improvement.'},
+    {num:9,id:'ssl',name:'Sodium Stearoyl Lactylate (E481)',tag:'Protein complex',hlb:11,base:0.12,mn:0.05,mx:0.20,cold:false,function:'Protein complexation, texture softening',notes:'0.05–0.20%. Forms complex with proteins & starches. Reduces icy texture. Heat 65°C.'},
+    {num:10,id:'gms',name:'GMS – Distilled Monoglyceride 90%',tag:'Anti-shrinkage',hlb:3.8,base:0.22,mn:0.10,mx:0.30,cold:false,function:'Anti-shrinkage, α-crystal network, fine destabilisation',notes:'0.10–0.30%. 90% monoglyceride. Prevents volume shrinkage. Heat 70°C. Use with PS80.'},
+    {num:11,id:'lecithin',name:'Sunflower Lecithin (E322)',tag:'Clean label / natural',hlb:7,base:0.25,mn:0.10,mx:0.50,cold:true,function:'Natural emulsification, antioxidant',notes:'0.10–0.50%. Natural phospholipid. Allergen-free (sunflower). Use 0.30–0.50% for equivalent effect.'},
+    {num:12,id:'quillaja',name:'Quillaja Extract (E999)',tag:'Vegan foam',hlb:14,base:0.015,mn:0.008,mx:0.025,cold:true,function:'Vegan foaming, plant-based aeration',notes:'0.008–0.025%. Saponin-based. EXCEPTIONAL vegan foam. Soapy taste at >0.03%. Pair with CITREM.'},
+    {num:13,id:'caseinate',name:'Sodium Caseinate',tag:'Dairy emulsifier / protein',hlb:12,base:0.8,mn:0.5,mx:1.5,cold:true,function:'Protein emulsification, foam stability',notes:'0.5–1.5%. Dual emulsifier+protein. >1.5% may reduce overrun. Contributes to MSNF.'},
+    {num:14,id:'eggyolk',name:'Egg Yolk (fresh or powder)',tag:'Custard / lecithin',hlb:9,base:2.0,mn:1.0,mx:4.0,cold:false,function:'Natural lecithin, custard flavour',notes:'1.0–4.0% fresh (0.3–0.8% dried). MUST cook to 80°C. Classic artisan gelato emulsifier.'},
+    {num:15,id:'sucrose',name:'Sucrose Esters (E473)',tag:'Fine crystal / clean label',hlb:15,base:0.08,mn:0.04,mx:0.12,cold:false,function:'Fine fat destabilisation, fine ice crystals',notes:'0.04–0.12%. Very fine fat destabilisation → fine crystals. Synergistic with MDG. Heat 60–65°C.'},
+    {num:16,id:'cyclo',name:'Cyclodextrins (E459)',tag:'Flavour complexing',hlb:13,base:0.20,mn:0.10,mx:0.30,cold:true,function:'Flavour encapsulation, off-flavour masking',notes:'0.10–0.30%. Molecular encapsulation. Masks beany or oxidised notes. Use with primary emulsifiers.'},
+    {num:17,id:'e470a',name:'Potassium Stearate (E470a)',tag:'Alkaline / niche',hlb:8,base:0.08,mn:0.04,mx:0.15,cold:false,function:'Alkaline emulsification',notes:'0.04–0.15%. Alkaline — raises pH slightly. Niche use. Less common than MDG/PS80.'}
+];
+
+// ═══════════════════════════════════════
+// CALCULATIONS
+// ═══════════════════════════════════════
+function getBaseTotals() {
+    let t={weight:0,fat:0,water:0,msnf:0,sugar:0,protein:0,alcohol:0,salt:0,pac:0,pod:0,hf:0};
+    for(let ing of selectedIngredients){
+        if(ing._isAdditive) continue;
+        const q=ing.quantity||0; if(!q) continue;
+        t.weight+=q; t.fat+=(ing['Total fat']||0)*q/100; t.water+=(ing.Water||0)*q/100;
+        t.msnf+=(ing.MSNF||0)*q/100; t.sugar+=(ing['Total sugars']||0)*q/100;
+        t.protein+=(ing.Protein||0)*q/100; t.alcohol+=(ing.Alcohol||0)*q/100;
+        t.salt+=(ing.Salt||0)*q/100; t.pac+=(ing.PAC||0)*q/100;
+        t.pod+=(ing.POD||0)*q/100; t.hf+=(ing.HF||0)*q/100;
+    }
+    return t.weight>0?t:null;
+}
+
+function computeFreezingPoint(w,pac,hf,salt,msnf){
+    if(w<=0)return-999;
+    const x=(((pac-hf)/10)+(salt*586/100))/w*100;
+    const p=1.8e-9*Math.pow(x,4)-1.5486e-6*Math.pow(x,3)+0.0004066439*x*x+0.0429570733*x+0.1564927407;
+    return -p-(msnf*2.37/w);
+}
+
+// ═══════════════════════════════════════
+// FEATURE 3: FREEZING CURVE CHART
+// GREEN  = Total FPD  : gentle slope — FP of full mix at each ice %
+// ORANGE = % Frozen Water : steep drop — FP of concentrated residual unfrozen fraction
+// ═══════════════════════════════════════
+function buildFreezeCurve(wP, dPAC, dHF, saltP, msnfP, frozenTarget, initFP_C, servFP_C){
+    const card = document.getElementById('freezeChartCard');
+    if(!card) return;
+    card.style.display = 'block';
+
+    // X-axis: 0,5,10,...,45 then every 1% from 50-90
+    const fwArr = [];
+    for(let fw=0; fw<=45; fw+=5) fwArr.push(fw);
+    for(let fw=50; fw<=90; fw++) fwArr.push(fw);
+
+    // ── GREEN: Total FPD ──
+    // Gentle slope. FP of the whole system at each frozen water %.
+    // As ice forms, free water decreases → FP of remaining liquid falls slowly.
+    const totFPD_C = fwArr.map(fw => {
+        const freeW = wP * (1 - fw / 100);
+        if(freeW <= 0.1) return null;
+        const fp = computeFreezingPoint(freeW, dPAC, dHF, saltP, msnfP);
+        return (isFinite(fp) && fp > -900) ? fp : null;
+    });
+
+    // ── ORANGE: % of Frozen Water (Concentration curve) ──
+    // Steep drop. As water freezes, dissolved solutes concentrate in remaining liquid.
+    // The residual unfrozen fraction has a progressively more depressed freezing point.
+    // This creates the visually distinct, steeper orange curve seen in the screenshots.
+    const fwCurve_C = fwArr.map(fw => {
+        if(fw === 0) return initFP_C;
+        const unfrozenFrac = 1 - fw / 100;
+        const residualFreeW = wP * unfrozenFrac;
+        if(residualFreeW < 0.5) return null;
+        const cf    = 1 / unfrozenFrac;  // concentration factor
+        const cPAC  = Math.min(dPAC  * cf, 3000);
+        const cHF   = Math.min(dHF   * cf, 3000);
+        const cSalt = Math.min(saltP * cf, 60);
+        const cMsnf = Math.min(msnfP * cf, 100);
+        const fp = computeFreezingPoint(residualFreeW, cPAC, cHF, cSalt, cMsnf);
+        return (isFinite(fp) && fp > -900) ? fp : null;
+    });
+
+    // Convert to display units
+    const conv = c => (c !== null && isFinite(c)) ? (useFahrenheit ? cToF(c) : c) : null;
+    const totFPD   = totFPD_C.map(conv);
+    const fwCurve  = fwCurve_C.map(conv);
+    const initFP_d = conv(initFP_C);
+    const servFP_d = conv(servFP_C);
+    const uLabel   = unitLabel();
+
+    // Y-axis range spans both curves + markers
+    const allVals = [...totFPD, ...fwCurve, initFP_d, servFP_d].filter(v => v !== null && isFinite(v));
+    const yMin = useFahrenheit ? -58 : -50;
+    const yMax = useFahrenheit ? 32  :   0;
+
+    if(freezeCurveChart){ try{ freezeCurveChart.destroy(); }catch(e){} freezeCurveChart=null; }
+    const ctx = document.getElementById('freezeCurveChart').getContext('2d');
+    const targetIdx = fwArr.findIndex(fw => fw === frozenTarget);
+
+    freezeCurveChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: fwArr.map(String),
+            datasets: [
+                {
+                    // GREEN — gentle slope: FP of whole mix
+                    label: `Total FPD ${uLabel}`,
+                    data: totFPD,
+                    borderColor: '#8BC34A',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2.5, tension: 0.35, pointRadius: 0, spanGaps: true, order: 3
+                },
+                {
+                    // ORANGE — steep drop: FP of concentrated residual unfrozen fraction
+                    label: `% of Frozen Water`,
+                    data: fwCurve,
+                    borderColor: '#FF9800',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2.5, tension: 0.35, pointRadius: 0, spanGaps: true, order: 4
+                },
+                {
+                    // RED cross — Freezing Point marker at FW=0
+                    label: `FP ${uLabel}`,
+                    data: fwArr.map((fw, i) => i === 0 ? initFP_d : null),
+                    borderColor: '#EF5350', backgroundColor: '#EF5350',
+                    borderWidth: 0,
+                    pointRadius: fwArr.map((fw, i) => i === 0 ? 8 : 0),
+                    pointBorderColor: '#EF5350', pointBorderWidth: 2.5,
+                    pointStyle: 'crossRot',
+                    showLine: false, spanGaps: false, order: 1
+                },
+                {
+                    // GREEN dot — Serving Temp at user's frozenTarget
+                    label: `Serving Temp ${uLabel}`,
+                    data: fwArr.map((fw, i) => i === targetIdx ? servFP_d : null),
+                    borderColor: '#8BC34A', backgroundColor: '#8BC34A',
+                    borderWidth: 0,
+                    pointRadius: fwArr.map((fw, i) => i === targetIdx ? 9 : 0),
+                    pointStyle: 'circle',
+                    showLine: false, spanGaps: false, order: 2
+                }
+            ]
+        },
+        plugins: [{
+            id: 'curveAnnotations',
+            afterDraw(chart){
+                const ctx2 = chart.ctx;
+                const xSc  = chart.scales.x;
+                const ySc  = chart.scales.y;
+                if(!xSc || !ySc) return;
+                ctx2.save();
+                ctx2.font = 'bold 10.5px sans-serif';
+
+                // FP label — red, pointing right from the cross marker
+                if(initFP_d !== null && isFinite(initFP_d)){
+                    const px = xSc.getPixelForValue(0);
+                    const py = ySc.getPixelForValue(initFP_d);
+                    ctx2.fillStyle = '#EF5350';
+                    ctx2.textAlign = 'left';
+                    ctx2.fillText('\u2190 Freezing Point ' + initFP_d.toFixed(2) + ' ' + uLabel, px + 14, py - 4);
+                }
+
+                // Serving Temp label — gold, pointing left from dot
+                if(targetIdx >= 0 && servFP_d !== null && isFinite(servFP_d)){
+                    const px = xSc.getPixelForValue(targetIdx);
+                    const py = ySc.getPixelForValue(servFP_d);
+                    ctx2.fillStyle = '#F0C060';
+                    ctx2.textAlign = 'right';
+                    ctx2.fillText('Serving Temp. ' + servFP_d.toFixed(2) + ' ' + uLabel + ' \u2192', px - 12, py - 10);
+                }
+                ctx2.restore();
+            }
+        }],
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 500 },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Freezing Point and Serving Temperature',
+                    color: '#F0C060',
+                    font: { size: 13, weight: 'bold', family: "'Playfair Display', serif" },
+                    padding: { bottom: 10 }
+                },
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#ccc',
+                        font: { size: 10 },
+                        boxWidth: 28,
+                        usePointStyle: true,
+                        padding: 14
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(20,24,40,.93)',
+                    titleColor: '#F0C060', bodyColor: '#ddd',
+                    callbacks: {
+                        title: ctx => 'Frozen Water: ' + fwArr[ctx[0].dataIndex] + '%',
+                        label: ctx => {
+                            const v = ctx.raw;
+                            if(v === null || v === undefined) return null;
+                            return ctx.dataset.label + ': ' + Number(v).toFixed(2) + ' ' + uLabel;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: '% of Frozen Water (Ice %)', color: '#aaa', font: { size: 11 } },
+                    grid:  { color: 'rgba(255,255,255,.07)' },
+                    ticks: {
+                        color: '#aaa', font: { size: 9 },
+                        callback: (val, i) => {
+                            const fw = fwArr[i];
+                            return (fw % 10 === 0) ? fw : '';
+                        }
+                    }
+                },
+                y: {
+                    title: { display: true, text: 'Total FPD ' + uLabel, color: '#8BC34A', font: { size: 11, weight: 'bold' } },
+                    grid:  { color: 'rgba(255,255,255,.07)' },
+                    ticks: { color: '#aaa', font: { size: 9 }, callback: v => v.toFixed(1) + ' ' + uLabel },
+                    min: yMin, max: yMax
+                }
+            }
+        }
+    });
+
+    // Subtitle below chart
+    const noteEl = document.getElementById('freezeChartNote');
+    if(noteEl){
+        noteEl.textContent = '\ud83d\udfe0 Target: ' + frozenTarget + '% frozen water \u2192 Serving Temp ' + fmtTemp(servFP_C) + '   |   \u2744\ufe0f Initial Freezing Point: ' + fmtTemp(initFP_C);
+    }
+}
+
+let synergyBonusTotal=1.0, synergyMessages=[];
+
+function calculateStabiliserDosages(totals,machine,process,overrun,storageTemp,shelfLife){
+    const tm=totals.weight, fatPct=totals.fat/tm*100, waterPct=totals.water/tm*100;
+    const msnfPct=totals.msnf/tm*100, proteinPct=totals.protein/tm*100;
+    const sel=STABS.filter(s=>document.getElementById('s_'+s.id)?.classList.contains('on'));
+    const gums=sel.filter(s=>s.cls==='gum'), bulks=sel.filter(s=>s.cls==='bulk'), proteins=sel.filter(s=>s.cls==='protein');
+    let base=fatPct<1?0.30:fatPct<=3?0.26:fatPct<=6?0.22:fatPct<=10?0.18:fatPct<=14?0.15:fatPct<=18?0.12:0.10;
+    base*=shelfLife>=12?1.12:shelfLife>=9?1.08:shelfLife>=6?1.05:1.0;
+    base*=storageTemp<=-20?1.08:storageTemp<=-15?1.04:1.0;
+    const wF=Math.max(0.85,Math.min(1.20,1+(waterPct-62)/100));
+    const mF2=Math.max(0.85,Math.min(1.05,1-Math.max(0,(msnfPct-11))/80));
+    const pF=Math.max(0.85,Math.min(1.0,1-Math.max(0,proteinPct-3.5)*0.015));
+    const mFac={batch:1.0,continuous:0.95,wand:1.08,ninja:1.08,creami_deluxe:1.06,pacojet:1.05,frozen_bowl:1.06,nochurn:1.12,softserve:1.04,popsicle:1.15}[machine]||1.0;
+    const oF=1+Math.max(0,(overrun-80))/300;
+    let dyn=base*wF*mF2*pF*mFac*oF;
+    dyn*=(1-Math.min(0.12,bulks.reduce((a,r)=>a+r.base,0)*0.025));
+    dyn=Math.min(0.40,Math.max(0.06,dyn));
+    const ids=sel.map(s=>s.id);
+    synergyBonusTotal=1.0; synergyMessages=[];
+    if(ids.includes('xanthan')&&ids.includes('guar')){synergyBonusTotal*=1.08;synergyMessages.push('Xanthan+Guar: +8%');}
+    if(ids.includes('lgb')&&(ids.includes('kappa')||ids.includes('lambda')||ids.includes('iota'))){synergyBonusTotal*=1.20;synergyMessages.push('LBG+Carrageenan: +20%');}
+    if(ids.includes('xanthan')&&ids.includes('konjac')){synergyBonusTotal*=1.30;synergyMessages.push('Xanthan+Konjac: +30%');}
+    if(ids.includes('lgb')&&ids.includes('guar')){synergyBonusTotal*=1.10;synergyMessages.push('LBG+Guar: +10%');}
+    if(gums.length>=3){synergyBonusTotal*=1.05;synergyMessages.push('3+ gum blend: +5%');}
+    synergyBonusTotal=Math.min(1.50,synergyBonusTotal);
+    dyn=Math.max(0.06,dyn/synergyBonusTotal);
+    const rawGT=gums.reduce((a,s)=>a+s.base,0);
+    const gumRes=gums.map(s=>{let p=rawGT>0?s.base/rawGT*dyn:0;p=Math.max(s.mn,Math.min(s.mx,p));return{...s,ap:p,gr:parseFloat((p/100*tm).toFixed(4))};});
+    const bulkResAdj=bulks.map(s=>{let p=Math.max(s.mn,Math.min(s.mx,s.base));return{...s,ap:p,gr:parseFloat((p/100*tm).toFixed(3))};});
+    const proteinResAdj=proteins.map(s=>{let p=Math.max(s.mn,Math.min(s.mx,s.base));return{...s,ap:p,gr:parseFloat((p/100*tm).toFixed(3))};});
+    return{sRes:[...gumRes,...bulkResAdj,...proteinResAdj],gumRes,bulkResAdj,proteinResAdj,totGumG:gumRes.reduce((a,r)=>a+r.gr,0),totBulkG:bulkResAdj.reduce((a,r)=>a+r.gr,0),totProteinG:proteinResAdj.reduce((a,r)=>a+r.gr,0),synergyMessages};
+}
+
+function calculateEmulsifierDosages(totals,machine,overrun,fatType){
+    const tm=totals.weight, fatPct=totals.fat/tm*100;
+    const sel=EMUS.filter(e=>document.getElementById('e_'+e.id)?.classList.contains('emu-on'));
+    const mFac={batch:1.0,continuous:0.95,wand:1.05,ninja:1.05,creami_deluxe:1.05,pacojet:1.03,frozen_bowl:1.04,nochurn:1.10,softserve:1.04,popsicle:1.08}[machine]||1.0;
+    let base=fatPct<1?0:fatPct<3?0.06:fatPct<6?0.12:fatPct<10?0.18:fatPct<14?0.22:fatPct<18?0.26:0.28;
+    const oF=Math.max(1.0,1+(overrun-80)/400);
+    let dyn=fatType==='none'?0.04:base*mFac*oF;
+    dyn=Math.max(0,Math.min(0.30,dyn));
+    const rawT=sel.reduce((a,e)=>a+e.base,0), scale=rawT>0?dyn/rawT:1;
+    const eRes=sel.map(e=>{let p=Math.max(0,Math.min(e.mx,e.base*scale));return{...e,ap:parseFloat(p.toFixed(4)),gr:parseFloat((p/100*tm).toFixed(4))};});
+    let tw=0,td=0; eRes.forEach(e=>{tw+=e.hlb*e.ap;td+=e.ap;});
+    return{eRes,blendedHLB:td>0?tw/td:0,dynamicEmuTarget:dyn};
+}
+
+function calculateScores(sRes){
+    const sc={ft:0,mc:0,ic:0,tx:0}; if(!sRes.length)return sc;
+    const tot=sRes.reduce((a,r)=>a+r.ap,0)||1;
+    sc.ft=Math.min(99,Math.round(sRes.reduce((a,r)=>a+r.ft*r.ap,0)/tot*synergyBonusTotal));
+    sc.mc=Math.min(99,Math.round(sRes.reduce((a,r)=>a+r.mc*r.ap,0)/tot));
+    sc.ic=Math.min(99,Math.round(sRes.reduce((a,r)=>a+r.ic*r.ap,0)/tot*synergyBonusTotal));
+    sc.tx=Math.min(99,Math.round(sRes.reduce((a,r)=>a+r.tx*r.ap,0)/tot));
+    return sc;
+}
+
+function validateStabilizerCombinations(processType,fatType){
+    const sel=STABS.filter(s=>document.getElementById('s_'+s.id)?.classList.contains('on')), warns=[];
+    sel.forEach(s=>{
+        if(processType==='cold'&&!s.cold)warns.push(`❌ ${s.name} requires heat (${s.hydration})`);
+        if(s.id==='kappa'&&fatType==='none')warns.push('❌ Kappa Carrageenan INEFFECTIVE in sorbet/vegan');
+    });
+    const d=document.getElementById('stabValidationMsg');
+    if(warns.length){d.style.display='block';d.innerHTML=warns.join('<br>');}else d.style.display='none';
+}
+function validateEmulsifierCombinations(totals){
+    if(!totals)return;
+    const fatPct=totals.fat/totals.weight*100;
+    const sel=EMUS.filter(e=>document.getElementById('e_'+e.id)?.classList.contains('emu-on'));
+    const d=document.getElementById('emuHLBWarning');
+    if(!sel.length){d.style.display='none';return;}
+    let tw=0,td=0; sel.forEach(e=>{tw+=e.hlb*e.base;td+=e.base;});
+    const avg=td>0?tw/td:0;
+    const rec=fatPct<3?'12–15 (low fat O/W)':fatPct<8?'8–12':fatPct<14?'5–9':'3–7 (high fat)';
+    d.style.display='block';
+    d.innerHTML=`📊 Blended HLB: <strong>${avg.toFixed(1)}</strong> | Recommended for ${fatPct.toFixed(1)}% fat: HLB ${rec}`;
+}
+function triggerStabUpdate(){
+    const t=getBaseTotals(); if(!t)return;
+    const ft=(t.fat/t.weight*100)<1?'none':'dairy';
+    validateStabilizerCombinations(document.getElementById('processType').value,ft);
+    validateEmulsifierCombinations(t);
+    computeAll();
+}
+
+// ═══════════════════════════════════════
+// POPULATE ADDITIVES
+// ═══════════════════════════════════════
+function populateAdditivesIntoIngredients(stabData,emuData){
+    selectedIngredients=selectedIngredients.filter(i=>!i._isAdditive);
+    function make(name,grams,category,type){
+        let energy=0,fat=0,protein=0,carbs=0,water=0;
+        if(type==='gum'){energy=2;carbs=80;water=5;}
+        else if(type==='bulk_starch'){energy=360;carbs=90;water=5;}
+        else if(type==='bulk_fiber'){energy=200;carbs=80;water=5;}
+        else if(type==='emulsifier'){energy=760;fat=85;water=2;}
+        else if(type==='protein'){energy=400;protein=85;carbs=5;water=5;}
+        return{Name:name,name,Category:category,_isAdditive:true,_additiveType:type,
+            quantity:parseFloat(grams.toFixed(4)),Energy:energy,Water:water,'Total fat':fat,
+            'Saturated fat':0,'Trans fat':0,'Milk fat':0,'Cacao fat':0,'Other fat':fat,
+            Cholesterol:0,Sodium:0,Salt:0,Alcohol:0,Carbohydrates:carbs,Fiber:type==='bulk_fiber'?60:0,
+            'Total sugars':0,Polyols:0,Protein:protein,MSNF:0,PAC:0,POD:0,HF:0,'Rate(Kg)':0};
+    }
+    stabData.gumRes.forEach(r=>{if(r.gr>0)selectedIngredients.push(make(r.name,r.gr,'Stabiliser','gum'));});
+    stabData.bulkResAdj.forEach(r=>{if(r.gr>0){const t=['cornstarch','tapioca','ricestarch','arrowroot','potatostarch','modstarch'].includes(r.id)?'bulk_starch':'bulk_fiber';selectedIngredients.push(make(r.name,r.gr,'Stabiliser',t));}});
+    stabData.proteinResAdj.forEach(r=>{if(r.gr>0)selectedIngredients.push(make(r.name,r.gr,'Protein','protein'));});
+    emuData.eRes.forEach(r=>{if(r.gr>0)selectedIngredients.push(make(r.name,r.gr,'Emulsifier','emulsifier'));});
+}
+
+// ═══════════════════════════════════════
+// FIX #1: WEIGHT TOTALS DISPLAY + DUAL SYNC
+// ═══════════════════════════════════════
+function updateWeightTotals(){
+    const bs=parseFloat(document.getElementById('batchSize').value)||1000;
+    const bw=selectedIngredients.filter(i=>!i._isAdditive).reduce((s,i)=>s+(i.quantity||0),0);
+    const aw=selectedIngredients.filter(i=>i._isAdditive).reduce((s,i)=>s+(i.quantity||0),0);
+    const tw=bw+aw;
+    const box=document.getElementById('weightTotalsBox');
+    if(bw<=0){box.style.display='none';return;}
+    box.style.display='block';
+    document.getElementById('weightTotalsRow').innerHTML=
+        `<span class="wt-chip wt-base">Base: ${bw.toFixed(1)}g</span>`+
+        (aw>0?`<span class="wt-sep">+</span><span class="wt-chip wt-add">Additives: ${aw.toFixed(2)}g</span><span class="wt-sep">=</span><span class="wt-chip wt-total">Total: ${tw.toFixed(2)}g</span>`:'')
+        +`<span class="wt-sep">|</span><span class="wt-chip wt-batch">Batch set: ${bs}g</span>`;
+    let syncHtml='';
+    if(Math.abs(bw-bs)>0.5) syncHtml+=`<button class="sync-btn sync-btn-base" onclick="syncBatch()">↕ Sync to base (${bw.toFixed(0)}g)</button>`;
+    if(aw>0&&Math.abs(tw-bs)>0.5) syncHtml+=`<button class="sync-btn sync-btn-total" onclick="syncBatchFull()">↕ Sync to total incl. additives (${tw.toFixed(0)}g)</button>`;
+    document.getElementById('syncBtnsRow').innerHTML=syncHtml;
+}
+function syncBatch(){ const bw=selectedIngredients.filter(i=>!i._isAdditive).reduce((s,i)=>s+(i.quantity||0),0); document.getElementById('batchSize').value=bw.toFixed(0); checkBatch(); computeAll(); }
+function syncBatchFull(){ const tw=selectedIngredients.reduce((s,i)=>s+(i.quantity||0),0); document.getElementById('batchSize').value=tw.toFixed(0); checkBatch(); computeAll(); }
+
+function checkBatch(){
+    const bs=parseFloat(document.getElementById('batchSize').value)||1000;
+    const bw=selectedIngredients.filter(i=>!i._isAdditive).reduce((s,i)=>s+(i.quantity||0),0);
+    const d=document.getElementById('batchWarning');
+    if(bw>0&&Math.abs(bw-bs)>0.1){
+        d.style.display='flex';
+        d.innerHTML=`<span>⚠️ Base ingredients: <strong>${bw.toFixed(1)}g</strong> | Batch setting: <strong>${bs}g</strong></span>`;
+    } else d.style.display='none';
+    updateWeightTotals();
+}
+function updateBatchFromMachine(){const m=document.getElementById('machineType').value;const s={wand:236,ninja:473,creami_deluxe:710,pacojet:800,frozen_bowl:650,batch:1000,continuous:1000,softserve:2000,popsicle:1000,nochurn:1000};document.getElementById('batchSize').value=s[m]||1000;checkBatch();computeAll();}
+
+// ═══════════════════════════════════════
+// DEFAULT CSV
+// ═══════════════════════════════════════
+const DEFAULT_CSV=`Name,Category,Energy,Water,Total fat,Saturated fat,Trans fat,Milk fat,Cacao fat,Other fat,Cholesterol,Sodium,Salt,Alcohol,Carbohydrates,Fiber,Total sugars,Polyols,Added sugars,Lactose,Protein,Total solids,Other solids,Cacao solids,MSNF,Vitamin C Mg,VitaminD,Calcium,Iron,Potassium,Magnesium,Chloride,PAC,POD,HF,Rate(Kg),Source,Glycemic Index
+Alcohol 40%,Alcohol,233.73,66.61,0,0,0,0,0,0,0,0,0,33.39,0,0,0,0,0,0,0,,,0,0,,0,0,0,0,,,247.09,0,0,0,,
+Allulose,Sugar,40,0,0,0,0,0,0,0,0,0,0,0,100,0,0,0,0,0,0,100,100,0,0,,0,0,0,0,,,190,70,0,0,,0
+Apple,Fruit,58,85.5,0.19,0,0,0,0,0.19,0,1,0,0,13.6,2.8,9.59,0,0,0,0.44,14.5,4.28,0,0,,0,5,0.2,120,,,16.48,12.48,0.266,,,39
+Banana,Fruit,89,74.9,0.33,0.11,0,0,0,0.33,0,1,0,0,22.8,2.6,12.2,0,0,0,1.09,25.1,11.48,0,0,,0,5,0.3,358,,,21.08,14.47,0.462,,,45
+Blueberry,Fruit,57,84.2,0.33,0.03,0,0,0,0.33,0,1,0,0,14.5,2.4,9.96,0,0,0,0.74,15.8,4.77,0,0,,0,6,0.3,77,,,18.83,12.32,0.462,,,25
+Butter,Dairy,746.21,14.87,82.2,45.6,0,82.2,0,0,235,524,1.33,0,0,0,0.87,0,0,0.87,0.58,85.13,0.15,0,1.6,,0,21,0.1,23,,,0.87,0.14,0,,,50
+Chocolate 70%,Chocolate,530.1,0,42.5,24,0,0,42.5,0,0,0,0,0,30,0,30,0,30,0,6.9,100,20.6,27.5,0,,0,0,0,0,,,30,30,87.75,,,22
+Cocoa powder 11%,Chocolate,344.5,0,11.1,5.56,0,0,11.1,0,0,0,0,0,55.6,33.3,0,0,0,0,22.2,100,66.7,66.7,0,,0,167,44.4,2220,,,0,0,130.05,,,20
+Coconut cream,Other,238.3,70.8,24.3,22.1,0,0,0,24.3,0,7.9,0.02,0,2.6,0,2.1,0,0,0,2.3,29.2,0.48,0,0,,0,0,0,0,,,2.1,2.1,34.02,,,
+Coconut milk,Other,230,67.6,23.8,21.1,0,0,0,23.8,0,15,0.04,0,5.54,2.2,3.34,0,0,0,2.29,32.4,2.93,0,0,,0,16,1.6,263,,,3.34,3.34,33.32,,,40
+Coconut oil,Oil,900,0,100,92.9,0,0,0,100,0,0,0,0,0,0,0,0,0,0,0,100,0,0,0,,0,0,0,0,,,0,0,140,,,
+Condensed milk sweetened,Dairy,327.54,27.2,8.7,5.49,0,8.7,0,0,34,127,0.32,0,54.4,0,12,0,0,12,7.91,72.8,1.47,0,21.7,,0,284,0.2,371,,,54.4,44.32,0,,,61
+Cream 35% Fat,Dairy,494,59.09,35,22,0,35,0,0,75,25,0.06,0,3.19,0,1.96,0,0,3.19,2.11,40.91,0.55,0,5.85,0,0,57,0,0,0,0,3.19,0.51,0,,,
+Dextrose,Sugar,368,8,0,0,0,0,0,0,0,0,0,0,92,0,4.32,0,92,0,0,92,0,0,0,,0,0,0,0,,,175,71,0,,,100
+Egg whole,Egg,143,76.2,9.51,3.13,0.04,0,0,9.51,372,142,0.36,0,0.72,0,4.73,0,0,0,12.6,23.8,0.96,0,0,,0,56,1.8,138,,,0.7,0.28,13.314,,,
+Egg yolk,Egg,322,52.3,26.5,9.55,0,0,0,26.5,1080,48,0.12,0,3.59,0,3.97,0,0,0,15.9,47.7,4.62,0,0,,0,129,2.7,109,,,0.56,0.56,37.1,,,
+Erytritol,Sugar,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,100,0,0,0,100,100,0,0,,0,0,0,0,,,280,70,0,,,0
+Evaporated milk,Dairy,134,74,7.56,4.59,0,7.56,0,0,29,106,0.27,0,10,0,5.3,0,0,10,6.81,26,1.36,0,16.81,,0,261,0.2,303,,,10,1.6,0,,,25
+Fructose,Sugar,400,0,0,0,0,0,0,0,0,0,0,0,100,0,4.76,0,100,0,0,100,0,0,0,,0,0,0,0,,,190,170,0,,,20
+Glucose powder 40 DE,Sugar,380,5,0,0,0,0,0,0,0,0,0,0,95,0,10,0,95,0,0,95,57,0,0,,0,0,0,0,,,78,34,0,,,100
+Glucose syrup DE60,Sugar,320,20,0,0,0,0,0,0,0,0,0,0,80,0,36.5,0,23,0,0,80,57,0,0,,0,0,0,0,,,95,68,0,,,100
+Hazelnut paste,Nut,689,3,62.6,4.5,0,0,0,62.6,0,0,0,0,21.4,6,3.53,0,0,0,13,97,18,0,0,,0,0,0,0,,,3.4,3.4,87.64,,,25
+Heavy Cream,Dairy,347.04,58.24,36,24.12,0,36,0,0,0,0,0,0,3.14,0,4.32,0,0,3.14,2.07,41.76,0.55,0,5.76,,0,0,0,0,,,3.14,0.5,0,,,
+Honey,Sugar,320,20,0,0,0,0,0,0,0,0,0,0,80,0,0,0,80,0,0,80,0,0,0,,0,0,0,0,,,150,130,0,,,60
+Inulin,Other,208,4,0,0,0,0,0,0,0,0,0.2,0,96,88,4.75,0,0,0,0,96,87.8,0,0,,0,0,0,0,,,10,10,0,,,5
+Invert sugar / Trimoline,Sugar,290,27.5,0,0,0,0,0,0,0,0,0,0,72.5,0,7.1,0,72.5,0,0,72.5,0,0,0,,0,0,0,0,,,150,100,0,,,50
+Lemon juice,Fruit,30.76,92.31,0,0,0,0,0,0,0,0,0,0,7.69,0,2.52,0,0,0,0,7.69,5.17,0,0,,0,0,0,0,,,4.4,2.99,0,,,20
+Maltodextrin 19DE,Sugar,380,5,0,0,0,0,0,0,0,0,0,0,95,0,7,0,7,0,0,95,88,0,0,,0,0,0,0,,,23,9,0,,,95
+Mango,Fruit,60,83.5,0.38,0.09,0,0,0,0.38,0,1,0,0,15,1.6,13.7,0,0,0,0.82,16.5,1.6,0,0,,0,11,0.2,168,,,19.68,16.47,0.532,,,56
+Mascarpone,Dairy,429,42.77,50,35.7,0,50,0,0,143,36,0.09,0,0,0,,0,0,0,7.14,57.23,0,0,7.14,,0,143,0,0,,,0,0,0,,,
+Milk 3.5% Fat,Dairy,62,88,3.5,0,0,3.5,0,0,0,0,0,0,4.7,0,,0,0,4.73,3,12,0.8,0,8.5,,0,110,0,0,,,4.73,0.76,0,,,34
+Milk Powder Whole 26% Fat,Dairy,494,1.38,26,17,1,26,0,0,75,330,0.84,0,39.12,0,,0,0,39.12,25.84,98.62,6.82,0,71.78,0,0,880,0,0,0,0,39.12,6.26,0,,0,31
+Orange juice,Fruit,38,90.5,0,0,0,0,0,0,0,0,0,0,9.5,0,8.5,0,0,0,0,9.5,1,0,0,,0,0,0,0,,,12.3,9.48,0,,,40
+Passion fruit,Fruit,97,72.9,0.7,0.06,0,0,0,0.7,0,28,0.07,0,23.4,10.4,11.2,0,0,0,2.2,27.1,12.93,0,0,,0,12,1.6,348,,,11.2,11.2,0.98,,,30
+Pistachio paste,Nut,576.1,4.37,45.3,5.91,0,0,0,45.3,0,1,0,0,27.2,10.6,7.66,0,0,0,20.2,95.63,22.47,0,0,,0,105,3.9,1020,,,8.1,7.59,63.42,,,15
+Raspberry,Fruit,52,85.8,0.65,0.02,0,0,0,0.65,0,1,0,0,11.9,6.5,4.42,0,0,0,1.2,14.2,7.93,0,0,,0,25,0.7,151,,,8.2,5.63,0.91,,,25
+Salt,Other,0,0.2,0,0,0,0,0,0,0,38168,99.37,0,0,0,0,0,0,0,0,99.37,,0,0,,0,34,0,98,1,61200,0,0,0,,FSANZ,
+Skim milk,Dairy,36,91,0,0,0,0,0,0,0,0,0,0,4.91,0,,0,0,4.91,3.24,9,0.85,0,9,,0,0,0,0,,,4.91,0.78,0,,,35
+Skim milk powder,Dairy,397.04,1.99,1,0.67,0,1,0,0,0,0,0,0,53,0,,0,0,52.87,34.92,98.01,9.22,0,97,,0,0,0,0,,,52.9,8.5,0,,,32
+Sorbitol,Sugar,260,0,0,0,0,0,0,0,0,0,0,0,0,0,100,100,0,0,0,100,100,0,0,,0,0,0,0,,,187.9,60,0,,,9
+Strawberry,Fruit,32,91,0.3,0.02,0,0,0,0.3,0,1,0,0,7.68,2,4.89,0,0,0,0.67,9,3.14,0,0,,0,16,0.4,153,,,8.89,6.15,0.42,,,25
+Sucrose,Sugar,400,0,0,0,0,0,0,0,0,0,0,0,100,0,100,0,100,0,0,100,0,0,0,,0,0,0,0,,,100,100,0,,,100
+Sugar,Sugar,400,0,0,0,0,0,0,0,0,0,0,0,100,0,100,0,100,0,0,100,0,0,0,,0,0,0,0,,,100,100,0,,,100
+Vanilla Extract,Flavour,245,65,0,0,0,0,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,,0,0,0,0,,,259,0,0,,,
+Water,Other,0,100,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,,0,0,0,0,,,0,0,0,,,
+Watermelon,Fruit,30,91.4,0.15,0.02,0,0,0,0.15,0,1,0,0,7.55,0.4,6.2,0,0,0,0.61,8.6,1.64,0,0,,0,7,0.2,112,,,10.66,8.16,0.21,,,75
+Whole milk 3.5% Fat,Dairy,65.81,87.86,3.45,2.31,0,3.45,0,0,0,0,0,0,4.74,0,,0,0,4.74,3.13,12.14,0.82,0,8.69,,0,0,0,0,,,4.74,0.76,0,,,
+WPC-80 (Whey Protein Concentrate) Powder,Dairy,8,3.5,7.1,4.6,0,7.1,0,0,0,0,0,0,8.4,0,,0,0,7.1,80,96.5,2.3,0,89.4,,0,0,0,0,,,7.1,1.14,0,,,
+Xylitol,Sugar,240,0,0,0,0,0,0,0,0,0,0,0,0,0,100,100,0,0,0,100,100,0,0,,0,0,0,0,,,225,100,0,,,7
+Yogurt 3.10% Fat,Dairy,61.5,85.7,3.1,2,0,3.1,0,0,0,0,0,0,4.4,0,,0,0,4.4,4,14.3,2.8,0,11.2,,0,138,0,0,,,4.4,0.7,0,,,35
+Stabilisers,Stabiliser,,0,,,,,,,,,,,,,,,,,,100,,,,,,,,,,,,,,,,
+Emulsifiers,Emulsifier,,0,,,,,,,,,,,,,,,,,,100,,,,,,,,,,,,,,,,
+`;
+
+function parseCSV(txt){
+    const lines=txt.trim().split(/\r?\n/); if(lines.length<2)return[];
+    const headers=lines[0].split(',').map(h=>h.trim()), data=[];
+    for(let i=1;i<lines.length;i++){
+        if(!lines[i].trim())continue;
+        const vals=lines[i].split(',').map(v=>v.trim().replace(/^"|"$/g,''));
+        let obj={}; headers.forEach((h,idx)=>{let v=vals[idx]||'';if(h==='Name'||h==='Category')obj[h]=v;else{let n=parseFloat(v);obj[h]=isNaN(n)?0:n;}});
+        if(obj.Name&&obj.Name!=='')data.push(obj);
+    }
+    return data;
+}
+
+function loadDB(csv,preserve=true){
+    const nm=parseCSV(csv); if(!nm.length){showToast('CSV has no valid ingredients',true);return false;}
+    const oldSel=preserve?selectedIngredients.filter(i=>!i._isAdditive):[];
+    ingredientMaster=nm;
+    document.getElementById('ingCount').innerText=nm.length;
+    const cats=new Set(nm.map(i=>i.Category).filter(c=>c&&c!==''));
+    const cs=document.getElementById('categoryFilter');
+    cs.innerHTML='<option value="">All categories</option>';
+    cats.forEach(c=>{cs.innerHTML+=`<option value="${c}">${c}</option>`;});
+    if(preserve&&oldSel.length){selectedIngredients=oldSel.map(o=>{const m=nm.find(i=>i.Name===o.name);return m?{...m,name:m.Name,quantity:o.quantity}:null;}).filter(x=>x);}
+    else selectedIngredients=[];
+    renderList(); filterIngredients(); computeAll(); checkBatch();
+    showToast(`Loaded ${nm.length} ingredients`);return true;
+}
+
+function filterIngredients(){
+    const term=document.getElementById('searchInput').value.toLowerCase();
+    const cat=document.getElementById('categoryFilter').value;
+    let f=ingredientMaster.filter(i=>i.Name.toLowerCase().includes(term));
+    if(cat)f=f.filter(i=>i.Category===cat);
+    const d=document.getElementById('searchResultsList');
+    d.innerHTML=f.slice(0,40).map(i=>`<div class="result-item" onclick="addIngredient('${i.Name.replace(/'/g,"\\'")}')"><span><strong>${i.Name}</strong> <span style="color:#888;">(${i.Category})</span></span><span>➕</span></div>`).join('');
+    if(!f.length)d.innerHTML='<div style="padding:12px;text-align:center;color:#aaa;">No matches</div>';
+}
+
+function addIngredient(name){
+    const full=ingredientMaster.find(i=>i.Name===name); if(!full)return;
+    if(selectedIngredients.filter(i=>!i._isAdditive).some(i=>i.name===name)){showToast(`${name} already added`,true);return;}
+    const firstAdd=selectedIngredients.findIndex(i=>i._isAdditive);
+    const ni={...full,name:full.Name,quantity:0};
+    if(firstAdd>=0)selectedIngredients.splice(firstAdd,0,ni);
+    else selectedIngredients.push(ni);
+    renderList(); computeAll(); checkBatch();
+}
+
+function renderList(){
+    const c=document.getElementById('selectedIngredientsContainer');
+    const batch=parseFloat(document.getElementById('batchSize').value)||1000;
+    const base=selectedIngredients.filter(i=>!i._isAdditive);
+    const stabAdd=selectedIngredients.filter(i=>i._isAdditive&&i.Category==='Stabiliser');
+    const protAdd=selectedIngredients.filter(i=>i._isAdditive&&i.Category==='Protein');
+    const emuAdd=selectedIngredients.filter(i=>i._isAdditive&&i.Category==='Emulsifier');
+    let h='';
+    if(!base.length&&!stabAdd.length){h='<div style="text-align:center;padding:14px;color:#aaa;font-size:.72rem;">No ingredients added yet</div>';}
+    base.forEach(ing=>{
+        const ri=selectedIngredients.indexOf(ing);
+        const pct=batch>0?(ing.quantity/batch*100).toFixed(1):'0.0';
+        h+=`<div class="ingr-card"><div class="ingr-top"><div class="ingr-name">${ing.name}</div><div class="ingr-cat-tag">${ing.Category||''}</div></div>
+            <div class="ingr-bottom"><div class="ingr-qty-wrap"><input type="number" value="${ing.quantity}" step="10" placeholder="g" onchange="updateQty(${ri},this.value)"><span style="font-size:.68rem;">g</span></div>
+            <div class="ingr-pct">${pct}%</div><button class="remove-btn" onclick="removeIng(${ri})">✕</button></div></div>`;
+    });
+    if(stabAdd.length){h+=`<div class="additive-group-label agl-stab">🧪 Stabilisers (auto-calculated)</div>`;
+        stabAdd.forEach(ing=>{const ri=selectedIngredients.indexOf(ing);const pct=batch>0?(ing.quantity/batch*100).toFixed(4):'0.0000';
+            h+=`<div class="ingr-card additive-card"><div class="ingr-top"><div class="ingr-name">${ing.name}<span class="badge badge-stab">STAB</span></div></div>
+            <div class="ingr-bottom"><div class="ingr-qty-wrap"><input type="number" value="${ing.quantity}" step="0.1" onchange="updateQty(${ri},this.value)"><span style="font-size:.68rem;">g</span></div>
+            <div class="ingr-pct" style="color:var(--mint)">${pct}%</div><button class="remove-btn" onclick="removeIng(${ri})">✕</button></div></div>`;});}
+    if(protAdd.length){h+=`<div class="additive-group-label agl-prot">💪 Proteins (auto-calculated)</div>`;
+        protAdd.forEach(ing=>{const ri=selectedIngredients.indexOf(ing);const pct=batch>0?(ing.quantity/batch*100).toFixed(3):'0.000';
+            h+=`<div class="ingr-card protein-card"><div class="ingr-top"><div class="ingr-name">${ing.name}<span class="badge badge-prot">PROT</span></div></div>
+            <div class="ingr-bottom"><div class="ingr-qty-wrap"><input type="number" value="${ing.quantity}" step="0.1" onchange="updateQty(${ri},this.value)"><span style="font-size:.68rem;">g</span></div>
+            <div class="ingr-pct" style="color:var(--blue)">${pct}%</div><button class="remove-btn" onclick="removeIng(${ri})">✕</button></div></div>`;});}
+    if(emuAdd.length){h+=`<div class="additive-group-label agl-emu">⚡ Emulsifiers (auto-calculated)</div>`;
+        emuAdd.forEach(ing=>{const ri=selectedIngredients.indexOf(ing);const pct=batch>0?(ing.quantity/batch*100).toFixed(4):'0.0000';
+            h+=`<div class="ingr-card emulsifier-card"><div class="ingr-top"><div class="ingr-name">${ing.name}<span class="badge badge-emu">EMU</span></div></div>
+            <div class="ingr-bottom"><div class="ingr-qty-wrap"><input type="number" value="${ing.quantity}" step="0.01" onchange="updateQty(${ri},this.value)"><span style="font-size:.68rem;">g</span></div>
+            <div class="ingr-pct" style="color:var(--gold)">${pct}%</div><button class="remove-btn" onclick="removeIng(${ri})">✕</button></div></div>`;});}
+    c.innerHTML=h;
+    updateWeightTotals();
+}
+
+function updateQty(i,v){selectedIngredients[i].quantity=parseFloat(v)||0;renderList();computeAll();checkBatch();}
+function removeIng(i){selectedIngredients.splice(i,1);renderList();computeAll();checkBatch();}
+function clearAllIngredients(){selectedIngredients=[];renderList();computeAll();checkBatch();}
+
+// ═══════════════════════════════════════
+// MAIN COMPUTE
+// ═══════════════════════════════════════
+function computeAll(){
+    const base=selectedIngredients.filter(i=>!i._isAdditive);
+    if(!base.length){
+        document.getElementById('resultsPanel').innerHTML='<div class="results-placeholder"><div style="font-size:2.5rem;">🍨</div><p>Add ingredients &amp; quantities to see results</p></div>';
+        document.getElementById('gaugesSection').style.display='none';
+        document.getElementById('freezeChartCard').style.display='none';
+        return;
+    }
+    const batchSize=parseFloat(document.getElementById('batchSize').value)||1000;
+    const frozenTarget=parseFloat(document.getElementById('frozenWaterTarget').value)||75;
+    const servingSize=parseFloat(document.getElementById('servingSize').value)||100;
+    const machine=document.getElementById('machineType').value;
+    const process=document.getElementById('processType').value;
+    const overrun=parseFloat(document.getElementById('overrun').value)||80;
+    // Storage temp: always convert to °C internally
+    const storageTempRaw=parseFloat(document.getElementById('storageTemp').value)||( useFahrenheit ? 11.8 : -11);
+    const storageTemp = useFahrenheit ? fToC(storageTempRaw) : storageTempRaw;
+    const shelfLife=parseFloat(document.getElementById('shelfLife').value)||3;
+    const bt=getBaseTotals();
+    if(!bt){document.getElementById('resultsPanel').innerHTML='<div class="results-placeholder">⚠️ Enter quantities</div>';return;}
+    const fatPct=bt.fat/bt.weight*100;
+    const fatType=fatPct<1?'none':'dairy';
+    const stabData=calculateStabiliserDosages(bt,machine,process,overrun,storageTemp,shelfLife);
+    const emuData=calculateEmulsifierDosages(bt,machine,overrun,fatType);
+    if(stabData.sRes.length||emuData.eRes.length){populateAdditivesIntoIngredients(stabData,emuData);renderList();checkBatch();}
+    validateStabilizerCombinations(process,fatType);
+    validateEmulsifierCombinations(bt);
+
+    let t={weight:0,water:0,fat:0,protein:0,carbs:0,sugar:0,fiber:0,alcohol:0,salt:0,pac:0,pod:0,hf:0,msnf:0,energy:0,calcium:0,glycemicLC:0};
+    for(let ing of selectedIngredients){
+        const q=ing.quantity||0; if(!q)continue;
+        t.weight+=q; t.water+=(ing.Water||0)*q/100; t.fat+=(ing['Total fat']||0)*q/100;
+        t.protein+=(ing.Protein||0)*q/100; t.carbs+=(ing.Carbohydrates||0)*q/100;
+        t.sugar+=(ing['Total sugars']||0)*q/100; t.fiber+=(ing.Fiber||0)*q/100;
+        t.alcohol+=(ing.Alcohol||0)*q/100; t.salt+=(ing.Salt||0)*q/100;
+        t.pac+=(ing.PAC||0)*q/100; t.pod+=(ing.POD||0)*q/100; t.hf+=(ing.HF||0)*q/100;
+        t.msnf+=(ing.MSNF||0)*q/100; t.energy+=(ing.Energy||0)*q/100; t.calcium+=(ing.Calcium||0)*q/100;
+        t.glycemicLC+=(q*(ing['Glycemic Index']||0)*(ing.Carbohydrates||0))/10000;
+    }
+    if(!t.weight){document.getElementById('resultsPanel').innerHTML='<div class="results-placeholder">⚠️ Enter quantities</div>';return;}
+    const f=100/t.weight;
+    const wP=t.water*f,fatP=t.fat*f,protP=t.protein*f,carbP=t.carbs*f,sugP=t.sugar*f;
+    const alcP=t.alcohol*f,saltP=t.salt*f,msnfP=t.msnf*f,pacP=t.pac*f,podP=t.pod*f,hfP=t.hf*f;
+    const enP=t.energy*f,caP=t.calcium*f,fibP=t.fiber*f;
+    const dPAC=pacP*10,dPOD=podP*10,dHF=hfP*10;
+    const calcHF = useHF ? dHF : 0;   // HF toggle: 0 = Corvitto correction disabled
+    const totSolids=100-wP-alcP, freeW=(100-totSolids-alcP)*(1-frozenTarget/100);
+    const glPer100=(t.glycemicLC/t.weight)*100;
+    const initFP=computeFreezingPoint(wP,dPAC,calcHF,saltP,msnfP);
+    const servFP=computeFreezingPoint(freeW,dPAC,calcHF,saltP,msnfP);
+    const sf=servingSize/100, dv=DV[currentRegion];
+    const dvP=(v,r)=>((v/r)*100).toFixed(0);
+    let giNum=0,giDen=0;
+    selectedIngredients.forEach(i=>{const q=i.quantity||0;if(!q)return;const gi=i['Glycemic Index']||0;const carbs=i.Carbohydrates||0;giNum+=gi*carbs*q;giDen+=carbs*q;});
+    const weightedGI=giDen>0?giNum/giDen:0;
+    updateGauges(dPOD/10, servFP, weightedGI, glPer100*sf, fatPct, machine, frozenTarget, storageTemp);
+    buildFreezeCurve(wP, dPAC, calcHF, saltP, msnfP, frozenTarget, initFP, servFP);
+
+    const stabTotG=stabData.sRes.reduce((a,r)=>a+r.gr,0);
+    const emuTotG=emuData.eRes.reduce((a,r)=>a+r.gr,0);
+    const stabPer100=stabTotG/bt.weight*100, emuPer100=emuTotG/bt.weight*100;
+    const scores=calculateScores(stabData.sRes);
+    const cl1=stabData.gumRes, cl2=stabData.bulkResAdj, prots=stabData.proteinResAdj;
+    const totCl1=cl1.reduce((a,r)=>a+r.gr,0), totCl2=cl2.reduce((a,r)=>a+r.gr,0);
+    const totStab=totCl1+totCl2, totProt=stabData.totProteinG||0, totAdd=totStab+totProt;
+
+    function scoreBar(label,val,color){
+        return `<div class="score-item"><div class="score-label">${label}</div><div class="score-bar"><div class="score-fill" style="width:${val}%;background:${color}"></div></div><div class="score-val" style="color:${color}">${val}/100</div></div>`;
+    }
+    function stabDetailRow(r,isEmu=false){
+        const gramsClass=isEmu?'sdr-grams-emu':'sdr-grams';
+        const bars=isEmu?'':`<div class="sdr-bar-wrap">
+            <div class="sdr-bar-item"><div class="sdr-bar-label">Freeze-Thaw</div><div class="sdr-bar"><div class="sdr-bar-fill" style="width:${r.ft}%;background:#2A6B52"></div></div><div class="sdr-bar-val">${r.ft}</div></div>
+            <div class="sdr-bar-item"><div class="sdr-bar-label">Meltdown</div><div class="sdr-bar"><div class="sdr-bar-fill" style="width:${r.mc}%;background:#C8874A"></div></div><div class="sdr-bar-val">${r.mc}</div></div>
+            <div class="sdr-bar-item"><div class="sdr-bar-label">Crystal Ctrl</div><div class="sdr-bar"><div class="sdr-bar-fill" style="width:${r.ic}%;background:#2471A3"></div></div><div class="sdr-bar-val">${r.ic}</div></div>
+            <div class="sdr-bar-item"><div class="sdr-bar-label">Texture</div><div class="sdr-bar"><div class="sdr-bar-fill" style="width:${r.tx}%;background:#7B3F6E"></div></div><div class="sdr-bar-val">${r.tx}</div></div>
+        </div>`;
+        const hlbBadge=isEmu?`<span class="sdr-hlb-badge">HLB ${r.hlb}</span>`:'';
+        const rowClass=isEmu?'emu-detail-row':'stab-detail-row';
+        const metas=isEmu?[`🌡️ ${r.cold?'Cold process ✓':'Requires heat'}`,`⚙️ ${r.function||r.tag}`]:[`🌡️ ${r.cold?'Cold soluble ❄️':'Requires heat 🔥'}`,`⚗️ ${r.hydration||''}`,`📐 Range: ${r.mn}–${r.mx}%`];
+        return `<div class="${rowClass}"><div class="sdr-top"><div><div class="sdr-name">${r.name}${hlbBadge}</div></div><div class="sdr-dose"><div class="sdr-pct">${r.ap.toFixed(4)}%</div><div class="${gramsClass}">${r.gr.toFixed(4)} g</div></div></div>
+            <div class="sdr-meta">${metas.map(m=>`<span>${m}</span>`).join('')}</div>${bars}<div class="sdr-notes">${r.notes}</div></div>`;
+    }
+
+    const stab_html=`
+        ${stabData.synergyMessages.length?`<div class="synergy-box">✨ <strong>Synergy Bonuses Active</strong> → Dose efficiency ×${synergyBonusTotal.toFixed(2)}<br><span style="font-size:.6rem;color:var(--steel)">${stabData.synergyMessages.join(' · ')}</span></div>`:''}
+        <div class="additive-summary-box"><h4>📊 Additives per 100g base mix</h4>
+            <div class="sum-row"><span>Gum Stabilisers (Class I)</span><span><strong>${(totCl1/bt.weight*100).toFixed(4)}%</strong> → ${totCl1.toFixed(4)} g/batch</span></div>
+            <div class="sum-row"><span>Bulk Stabilisers (Class II)</span><span><strong>${(totCl2/bt.weight*100).toFixed(3)}%</strong> → ${totCl2.toFixed(3)} g/batch</span></div>
+            <div class="sum-row"><span>Added Proteins</span><span><strong>${(totProt/bt.weight*100).toFixed(3)}%</strong> → ${totProt.toFixed(3)} g/batch</span></div>
+            <div class="sum-row"><span>Emulsifiers</span><span><strong>${emuPer100.toFixed(4)}%</strong> → ${emuTotG.toFixed(4)} g/batch</span></div>
+            <div class="sum-row"><span>Total Additives</span><span><strong>${((totAdd+emuTotG)/bt.weight*100).toFixed(3)}%</strong> → ${(totAdd+emuTotG).toFixed(3)} g/batch</span></div>
+        </div>
+        <div class="detail-section">
+        ${cl1.length?`<div class="detail-group-title dgt-stab"><span>🧪 Class I — Gum Stabilisers</span><span style="font-size:.6rem;color:var(--steel)">${totCl1.toFixed(4)} g total</span></div>${cl1.map(r=>stabDetailRow(r)).join('')}`:''}
+        ${cl2.length?`<div class="detail-group-title dgt-bulk"><span>🌾 Class II — Bulk Stabilisers</span><span style="font-size:.6rem;color:var(--steel)">${totCl2.toFixed(3)} g total</span></div>${cl2.map(r=>stabDetailRow(r)).join('')}`:''}
+        ${prots.length?`<div class="detail-group-title dgt-prot"><span>💪 Protein Stabilisers</span><span style="font-size:.6rem;color:var(--steel)">${totProt.toFixed(3)} g total</span></div>${prots.map(r=>stabDetailRow(r)).join('')}`:''}
+        ${emuData.eRes.filter(e=>e.ap>0).length?`<div class="detail-group-title dgt-emu"><span>⚡ Emulsifiers</span><span style="font-size:.6rem;color:var(--steel)">Blended HLB ${emuData.blendedHLB.toFixed(1)} · Target ${emuData.dynamicEmuTarget.toFixed(4)}%</span></div>
+        <div class="hlb-indicator">📐 <strong>Blended HLB: ${emuData.blendedHLB.toFixed(1)}</strong> | Fat ${fatPct.toFixed(1)}% | Target: ${fatPct<3?'HLB 12–15':fatPct<8?'HLB 8–12':fatPct<14?'HLB 5–9':'HLB 3–7'}</div>
+        ${emuData.eRes.filter(e=>e.ap>0).map(r=>stabDetailRow(r,true)).join('')}`:''}</div>
+        <div class="score-grid" style="margin-top:14px;">
+            ${scoreBar('Freeze–Thaw Stability',scores.ft,'#2A6B52')}${scoreBar('Meltdown Control',scores.mc,'#C8874A')}
+            ${scoreBar('Ice Crystal Control',scores.ic,'#2471A3')}${scoreBar('Texture Quality',scores.tx,'#7B3F6E')}
+        </div>`;
+
+    const nutr=`<div class="region-selector">
+        <button class="region-btn ${currentRegion==='USA'?'active':''}" onclick="setRegion('USA')">USA (%DV)</button>
+        <button class="region-btn ${currentRegion==='EU'?'active':''}" onclick="setRegion('EU')">EU (GDA)</button>
+        <button class="region-btn ${currentRegion==='India'?'active':''}" onclick="setRegion('India')">India (RDA)</button>
+    </div>
+    <table class="nutrition-table"><thead><tr><th>Nutrient</th><th>Per 100g</th><th>Per ${servingSize}g serving</th><th>%${currentRegion==='USA'?'DV':currentRegion==='EU'?'GDA':'RDA'}</th></tr></thead><tbody>
+        <tr><td>Energy</td><td>${enP.toFixed(0)} kcal</td><td>${(enP*sf).toFixed(0)} kcal</td><td>${dvP(enP*sf,dv.energy)}%</td></tr>
+        <tr><td>Total Fat</td><td>${fatP.toFixed(2)} g</td><td>${(fatP*sf).toFixed(1)} g</td><td>${dvP(fatP*sf,dv.fat)}%</td></tr>
+        <tr><td>Carbohydrates</td><td>${carbP.toFixed(2)} g</td><td>${(carbP*sf).toFixed(1)} g</td><td>${dvP(carbP*sf,dv.carbs)}%</td></tr>
+        <tr><td>Total Sugars</td><td>${sugP.toFixed(2)} g</td><td>${(sugP*sf).toFixed(1)} g</td><td>${dvP(sugP*sf,dv.sugar)}%</td></tr>
+        <tr><td>Dietary Fiber</td><td>${fibP.toFixed(2)} g</td><td>${(fibP*sf).toFixed(1)} g</td><td>${dvP(fibP*sf,dv.fiber)}%</td></tr>
+        <tr><td>Protein</td><td>${protP.toFixed(2)} g</td><td>${(protP*sf).toFixed(1)} g</td><td>${dvP(protP*sf,dv.protein)}%</td></tr>
+        <tr><td>Salt</td><td>${saltP.toFixed(4)} g</td><td>${(saltP*sf).toFixed(2)} g</td><td>${dvP(saltP*sf,dv.salt)}%</td></tr>
+        <tr><td>Calcium</td><td>${caP.toFixed(1)} mg</td><td>${(caP*sf).toFixed(0)} mg</td><td>${dvP(caP*sf,dv.calcium)}%</td></tr>
+    </tbody></table>
+    <div class="export-btn-row">
+        <button class="export-btn epdf" onclick="exportPDF()">📄 Export PDF</button>
+        <button class="export-btn exls" onclick="exportExcel()">📊 Export Excel</button>
+        <button class="export-btn ecsv" onclick="exportCSV()">📎 Export CSV</button>
+    </div>`;
+
+    document.getElementById('resultsPanel').innerHTML=`
+        <div class="results-grid">
+            <div class="stat-card"><div class="stat-val">${dPAC.toFixed(2)}</div><div class="stat-label">PAC ×10</div></div>
+            <div class="stat-card"><div class="stat-val">${dPOD.toFixed(2)}</div><div class="stat-label">POD ×10 Sweetness</div></div>
+            <div class="stat-card"><div class="stat-val">${fatP.toFixed(2)}g</div><div class="stat-label">Fat / 100g</div></div>
+            <div class="stat-card"><div class="stat-val">${msnfP.toFixed(2)}g</div><div class="stat-label">MSNF / 100g</div></div>
+            <div class="stat-card"><div class="stat-val">${stabPer100.toFixed(4)}%</div><div class="stat-label">Stabilisers / 100g</div></div>
+            <div class="stat-card"><div class="stat-val">${emuPer100.toFixed(4)}%</div><div class="stat-label">Emulsifiers / 100g</div></div>
+            <div class="stat-card"><div class="stat-val">${totSolids.toFixed(2)}%</div><div class="stat-label">Total Solids</div></div>
+            <div class="stat-card"><div class="stat-val">${wP.toFixed(2)}%</div><div class="stat-label">Total Water</div></div>
+            <div class="stat-card"><div class="stat-val">${carbP.toFixed(2)}g</div><div class="stat-label">Carbohydrates</div></div>
+            <div class="stat-card"><div class="stat-val">${protP.toFixed(2)}g</div><div class="stat-label">Protein</div></div>
+            <div class="stat-card"><div class="stat-val">${saltP.toFixed(4)}g</div><div class="stat-label">Salt</div></div>
+            <div class="stat-card"><div class="stat-val">${alcP.toFixed(2)}g</div><div class="stat-label">Alcohol</div></div>
+            <div class="stat-card"><div class="stat-val">${dHF.toFixed(2)}</div><div class="stat-label">HF (Hardening ×10)</div></div>
+            <div class="stat-card"><div class="stat-val">${glPer100.toFixed(2)}</div><div class="stat-label">Glycemic Load / 100g</div></div>
+        </div>
+        <div class="freeze-note">
+            <div><strong>❄️ Initial Freezing Point</strong></div>
+            <div class="freeze-temp">${fmtTemp(initFP)}</div>
+            <div style="margin-top:8px;"><strong>🌡️ Serving Temperature @ ${frozenTarget}% Frozen Water</strong></div>
+            <div class="freeze-temp">${fmtTemp(servFP)}</div>
+            <div style="font-size:.62rem;color:var(--steel);margin-top:6px;">${useFahrenheit ? '💡 Gelato: 8.6°F to 12.2°F @ 69% FW &nbsp;|&nbsp; Ice Cream: 3.2°F to 6.8°F @ 75% FW' : '💡 Gelato: −11°C to −13°C @ 69% FW &nbsp;|&nbsp; Ice Cream: −14°C to −16°C @ 75% FW'}</div>
+            <div style="font-size:.65rem;margin-top:6px;">Free water: <strong>${freeW.toFixed(2)} g/100g</strong> &nbsp;·&nbsp; Energy: <strong>${enP.toFixed(0)} kcal/100g</strong></div>
+        </div>
+        <div class="macro-row"><span>💰 Batch cost (approx)</span><span><strong>₹ ${selectedIngredients.filter(i=>!i._isAdditive).reduce((s,i)=>s+(i.quantity/1000)*(i['Rate(Kg)']||0),0).toFixed(2)}</strong></span></div>
+        <div class="macro-row"><span>⚖️ Mass balance</span><span>${(wP+fatP+protP+carbP+alcP+saltP).toFixed(1)}%</span></div>
+        ${nutr}
+        <div style="margin-top:16px;padding-top:14px;border-top:2px solid var(--border);">
+            <div style="font-family:'Playfair Display',serif;font-size:.92rem;color:var(--choc2);margin-bottom:10px;font-weight:700;">🧪 Stabilisers, Proteins & Emulsifiers — Detailed Analysis</div>
+            ${stab_html}
+        </div>`;
+}
+
+// ═══════════════════════════════════════
+// GRIDS
+// ═══════════════════════════════════════
+function buildStabGrid(){
+    const g=document.getElementById('stabGrid'); if(!g)return; g.innerHTML='';
+    STABS.forEach(s=>{
+        const d=document.createElement('div'); d.className='sel-item'; d.id='s_'+s.id;
+        d.onclick=()=>{const p=document.getElementById('processType').value;if(p==='cold'&&!s.cold){showToast(`🔥 ${s.name} requires heat`,true);return;}d.classList.toggle('on');triggerStabUpdate();};
+        d.innerHTML=`<div class="iname"><span class="item-number">${s.num}</span>${s.name} <span style="float:right;font-size:.6rem">${s.cold?'❄️':'🔥'}</span></div><div class="itag">${s.tag}${s.cls==='protein'?' · Protein':s.cls==='bulk'?' · Bulk':' · Gum'}</div>`;
+        g.appendChild(d);
+    });
+}
+function buildEmuGrid(){
+    const g=document.getElementById('emuGrid'); if(!g)return; g.innerHTML='';
+    EMUS.forEach(e=>{
+        const d=document.createElement('div'); d.className='sel-item'; d.id='e_'+e.id;
+        d.onclick=()=>{const p=document.getElementById('processType').value;if(p==='cold'&&!e.cold){showToast(`🔥 ${e.name} requires heat`,true);return;}d.classList.toggle('emu-on');triggerStabUpdate();};
+        d.innerHTML=`<div class="iname"><span class="item-number">${e.num}</span>${e.name} <span style="float:right;font-size:.6rem">${e.cold?'❄️':'🔥'}</span></div><div class="itag">${e.tag} · HLB ${e.hlb}</div>`;
+        g.appendChild(d);
+    });
+}
+function applyStabPreset(p){
+    STABS.forEach(s=>{const e=document.getElementById('s_'+s.id);if(e)e.classList.remove('on');});
+    const m={premium:['lgb','guar','lambda','iota'],sorbet:['xanthan','cmc','guar','iota','pectin'],gelato:['lgb','guar','lambda','tara','cornstarch'],kulfi:['cmc','fenugreek','hpmc','mcc'],dondurma:['konjac','xanthan','mastic','salep'],mochi:['cmc','guar','methylcellulose','tapioca'],commercial:['cremodan','grindsted'],highprotein:['wpc','wpi','pea_protein','guar','xanthan']};
+    (m[p]||[]).forEach(id=>{const e=document.getElementById('s_'+id);if(e)e.classList.add('on');});
+    triggerStabUpdate();
+}
+function applyEmuPreset(p){
+    EMUS.forEach(e=>{const el=document.getElementById('e_'+e.id);if(el)el.classList.remove('emu-on');});
+    const m={standard:['e471','ps80'],natural:['lecithin','quillaja','citrem'],pro:['datem','gms','ps80','e471']};
+    (m[p]||[]).forEach(id=>{const el=document.getElementById('e_'+id);if(el)el.classList.add('emu-on');});
+    triggerStabUpdate();
+}
+function clearStabs(){STABS.forEach(s=>{const e=document.getElementById('s_'+s.id);if(e)e.classList.remove('on');});triggerStabUpdate();}
+function clearEmus(){EMUS.forEach(e=>{const el=document.getElementById('e_'+e.id);if(el)el.classList.remove('emu-on');});triggerStabUpdate();}
+function autoFormulate(){
+    const t=getBaseTotals(); if(!t){showToast('Add base ingredients first',true);return;}
+    const fp=t.fat/t.weight*100,ft=fp<1?'none':'dairy',p=document.getElementById('processType').value,m=document.getElementById('machineType').value;
+    clearStabs();clearEmus();
+    let s=[],e=[];
+    if(ft==='none'){s=['xanthan','cmc','guar','iota','pectin'];e=['quillaja','citrem'];}
+    else if(fp<=3){s=['lgb','guar','lambda','cmc'];e=['ps80','ssl','quillaja'];}
+    else if(fp<=8){s=['lgb','guar','lambda','tara'];e=['lactem','e471','lecithin'];}
+    else if(fp<=14){s=['lgb','guar','lambda','iota'];e=['e471','gms','acetem'];}
+    else{s=['lgb','guar','lambda','iota','gelatin'];e=['gms','e471','datem'];}
+    if(p==='cold'){s=s.filter(id=>STABS.find(st=>st.id===id)?.cold===true);if(!s.includes('cmc'))s.push('cmc');if(!s.includes('xanthan'))s.push('xanthan');}
+    if(['wand','ninja','nochurn','creami_deluxe'].includes(m)){if(!s.includes('psyllium'))s.push('psyllium');if(!s.includes('mcc'))s.push('mcc');}
+    s=[...new Set(s)];
+    s.forEach(id=>{const el=document.getElementById('s_'+id);if(el)el.classList.add('on');});
+    e.forEach(id=>{const el=document.getElementById('e_'+id);if(el)el.classList.add('emu-on');});
+    triggerStabUpdate();showToast('✨ Auto formulated!');
+}
+
+// ═══════════════════════════════════════
+// FIX #2: SAVE RECIPE — modal with name, includes additives
+// ═══════════════════════════════════════
+function openSaveModal(){
+    if(!selectedIngredients.filter(i=>!i._isAdditive).length){showToast('Add base ingredients first',true);return;}
+    const baseCount=selectedIngredients.filter(i=>!i._isAdditive).length;
+    const addCount=selectedIngredients.filter(i=>i._isAdditive).length;
+    document.getElementById('saveRecipeNameInput').value='';
+    document.getElementById('saveSummaryMsg').innerHTML=
+        `<strong>${baseCount}</strong> base ingredient${baseCount!==1?'s':''}`+
+        (addCount>0?` + <strong>${addCount}</strong> additive${addCount!==1?'s':''} (stabilisers/emulsifiers/proteins) ready to save`:'');
+    openModal('saveModal');
+    setTimeout(()=>document.getElementById('saveRecipeNameInput').focus(),120);
+}
+function confirmSave(){
+    const name=document.getElementById('saveRecipeNameInput').value.trim();
+    if(!name){showToast('Please enter a recipe name',true);document.getElementById('saveRecipeNameInput').focus();return;}
+    const includeAdditives=document.getElementById('saveIncludeAdditives').checked;
+    const baseIngs=selectedIngredients.filter(i=>!i._isAdditive).map(i=>({name:i.name,quantity:i.quantity}));
+    const addIngs=includeAdditives
+        ? selectedIngredients.filter(i=>i._isAdditive).map(i=>({name:i.name,quantity:i.quantity,category:i.Category,additiveType:i._additiveType}))
+        : [];
+    const r={
+        name, savedAt:new Date().toISOString(),
+        ingredients:baseIngs,
+        additives:addIngs,
+        batchSize:document.getElementById('batchSize').value,
+        frozenWaterTarget:document.getElementById('frozenWaterTarget').value,
+        servingSize:document.getElementById('servingSize').value,
+        machineType:document.getElementById('machineType').value,
+        processType:document.getElementById('processType').value,
+        overrun:document.getElementById('overrun').value,
+        storageTemp:document.getElementById('storageTemp').value,
+        shelfLife:document.getElementById('shelfLife').value,
+        stabilisers:STABS.filter(s=>document.getElementById('s_'+s.id)?.classList.contains('on')).map(s=>s.id),
+        emulsifiers:EMUS.filter(e=>document.getElementById('e_'+e.id)?.classList.contains('emu-on')).map(e=>e.id)
+    };
+    let recs=JSON.parse(localStorage.getItem('iceCreamRecipesNS')||'{}');
+    recs[name]=r;
+    localStorage.setItem('iceCreamRecipesNS',JSON.stringify(recs));
+    closeModal('saveModal');
+    showToast(`✅ "${name}" saved — ${baseIngs.length} base${addIngs.length?' + '+addIngs.length+' additives':''}`);
+}
+
+// ═══════════════════════════════════════
+// FIX #3: LOAD RECIPE — dropdown list + delete
+// ═══════════════════════════════════════
+function openLoadModal(){
+    const recs=JSON.parse(localStorage.getItem('iceCreamRecipesNS')||'{}');
+    const names=Object.keys(recs);
+    const list=document.getElementById('loadRecipeList');
+    if(!names.length){
+        list.innerHTML='<div style="text-align:center;padding:24px;color:#aaa;font-size:.78rem">No saved recipes yet.<br>Use 💾 Save Recipe to save one.</div>';
+        openModal('loadModal');return;
+    }
+    list.innerHTML=names.map(name=>{
+        const r=recs[name];
+        const date=r.savedAt?new Date(r.savedAt).toLocaleDateString():'';
+        const baseCount=r.ingredients?r.ingredients.length:0;
+        const addCount=r.additives?r.additives.length:0;
+        return `<div class="recipe-item">
+            <div class="recipe-item-info" onclick="doLoadRecipe('${name.replace(/'/g,"\\'")}')">
+                <div class="recipe-item-name">📄 ${name}</div>
+                <div class="recipe-item-meta">${baseCount} base ingredient${baseCount!==1?'s':''}${addCount?' · '+addCount+' additive'+( addCount!==1?'s':''):''}${date?' · '+date:''}</div>
+                <div class="recipe-item-sub">Machine: ${r.machineType||'—'} · Batch: ${r.batchSize||'—'}g · ${r.processType||'—'} process</div>
+            </div>
+            <button class="recipe-del-btn" onclick="deleteRecipe('${name.replace(/'/g,"\\'")}')">🗑️ Delete</button>
+        </div>`;
+    }).join('');
+    openModal('loadModal');
+}
+function doLoadRecipe(name){
+    const recs=JSON.parse(localStorage.getItem('iceCreamRecipesNS')||'{}');
+    const r=recs[name]; if(!r){showToast('Recipe not found',true);return;}
+    selectedIngredients=r.ingredients.map(i=>{const f=ingredientMaster.find(m=>m.Name===i.name);return f?{...f,name:f.Name,quantity:i.quantity}:null;}).filter(x=>x);
+    document.getElementById('batchSize').value=r.batchSize||1000;
+    document.getElementById('frozenWaterTarget').value=r.frozenWaterTarget||75;
+    document.getElementById('servingSize').value=r.servingSize||100;
+    document.getElementById('machineType').value=r.machineType||'batch';
+    document.getElementById('processType').value=r.processType||'hot';
+    document.getElementById('overrun').value=r.overrun||80;
+    document.getElementById('storageTemp').value=r.storageTemp||-11;
+    document.getElementById('shelfLife').value=r.shelfLife||3;
+    clearStabs();clearEmus();
+    if(r.stabilisers)r.stabilisers.forEach(id=>{const el=document.getElementById('s_'+id);if(el)el.classList.add('on');});
+    if(r.emulsifiers)r.emulsifiers.forEach(id=>{const el=document.getElementById('e_'+id);if(el)el.classList.add('emu-on');});
+    closeModal('loadModal');
+    renderList();computeAll();checkBatch();
+    // After compute populates new additives, override with saved quantities if available
+    if(r.additives&&r.additives.length){
+        r.additives.forEach(saved=>{
+            const idx=selectedIngredients.findIndex(i=>i._isAdditive&&i.name===saved.name);
+            if(idx>=0) selectedIngredients[idx].quantity=saved.quantity;
+        });
+        renderList();updateWeightTotals();
+    }
+    showToast(`✅ Loaded "${name}"`);
+}
+function deleteRecipe(name){
+    if(!confirm(`Delete recipe "${name}"?\nThis cannot be undone.`))return;
+    const recs=JSON.parse(localStorage.getItem('iceCreamRecipesNS')||'{}');
+    delete recs[name];
+    localStorage.setItem('iceCreamRecipesNS',JSON.stringify(recs));
+    showToast(`Deleted "${name}"`);
+    openLoadModal(); // refresh list
+}
+
+// ═══════════════════════════════════════
+// FIX #4: COMPREHENSIVE EXPORTS
+// ═══════════════════════════════════════
+function getGenericName(n){let g=n.replace(/\s*\d+(?:\.\d+)?%?\s*(?:Fat)?/gi,'').replace(/\s*-\s*A2/gi,'').replace(/\bFat\b/gi,'').replace(/\s+/g,' ').trim();if(g.toLowerCase().includes('skim')&&g.toLowerCase().includes('milk'))g='Skim Milk';else if(g.toLowerCase().includes('milk'))g='Milk';else if(g.toLowerCase().includes('cream'))g='Cream';return g;}
+
+function computeNutrAll(){
+    let t={weight:0,energy:0,fat:0,carbs:0,sugar:0,fiber:0,protein:0,salt:0,calcium:0,water:0,msnf:0,pac:0,pod:0,hf:0};
+    selectedIngredients.forEach(i=>{const q=i.quantity||0;if(!q)return;t.weight+=q;t.energy+=(i.Energy||0)*q/100;t.fat+=(i['Total fat']||0)*q/100;t.carbs+=(i.Carbohydrates||0)*q/100;t.sugar+=(i['Total sugars']||0)*q/100;t.fiber+=(i.Fiber||0)*q/100;t.protein+=(i.Protein||0)*q/100;t.salt+=(i.Salt||0)*q/100;t.calcium+=(i.Calcium||0)*q/100;t.water+=(i.Water||0)*q/100;t.msnf+=(i.MSNF||0)*q/100;t.pac+=(i.PAC||0)*q/100;t.pod+=(i.POD||0)*q/100;t.hf+=(i.HF||0)*q/100;});
+    return t;
+}
+
+function exportPDF(){
+    if(!selectedIngredients.length){showToast('No data to export',true);return;}
+    try{
+        const jsPDF=window.jspdf&&window.jspdf.jsPDF; if(!jsPDF)throw new Error('jsPDF not loaded');
+        const bs=parseFloat(document.getElementById('batchSize').value)||1000;
+        const sv=parseFloat(document.getElementById('servingSize').value)||100;
+        const machine=document.getElementById('machineType').value;
+        const process=document.getElementById('processType').value;
+        const overrun=document.getElementById('overrun').value;
+        const frozenT=document.getElementById('frozenWaterTarget').value;
+        const storageT=document.getElementById('storageTemp').value;
+        const shelfL=document.getElementById('shelfLife').value;
+        const nt=computeNutrAll();
+        const f100=nt.weight>0?100/nt.weight:0;
+        const pdfHF = useHF ? (nt.hf*f100)*10 : 0;  // respect HF toggle in PDF export
+        const initFP=computeFreezingPoint(nt.water*f100,(nt.pac*f100)*10,pdfHF,nt.salt*f100,nt.msnf*f100);
+        const totSolids=100-nt.water*f100;
+        const freeW=(100-totSolids)*(1-parseFloat(frozenT)/100);
+        const servFP=computeFreezingPoint(freeW,(nt.pac*f100)*10,pdfHF,nt.salt*f100,nt.msnf*f100);
+        const dv=DV[currentRegion];
+        const dvP=(v,r)=>((v/r)*100).toFixed(0);
+        const sfv=sv/100;
+
+        const doc=new jsPDF({unit:'mm',format:'a4'});
+        const margin=14, pw=doc.internal.pageSize.getWidth()-margin*2;
+        let y=14;
+        const addLine=(txt,sz=9,bold=false,color=[40,20,5])=>{if(y>272){doc.addPage();y=14;}doc.setFontSize(sz);doc.setFont('helvetica',bold?'bold':'normal');doc.setTextColor(...color);doc.text(txt,margin,y);y+=sz*0.42+1.4;};
+        const sep=()=>{doc.setDrawColor(220,210,190);doc.line(margin,y,margin+pw,y);y+=3;};
+        const hdr2=(t)=>{y+=1;addLine(t,10,true,[44,21,6]);sep();};
+
+        addLine('GELATO & ICE CREAM FORMULATION REPORT',14,true,[44,21,6]);y+=1;
+        addLine(`Generated: ${new Date().toLocaleString()} | Region: ${currentRegion}`,7,false,[100,88,75]);sep();
+        hdr2('BATCH PARAMETERS');
+        const params=[['Machine',machine],['Batch Size',bs+'g'],['Process Type',process],['Overrun',overrun+'%'],['Storage Temp',storageT+'°C'],['Shelf Life',shelfL+' months'],['Serving Size',sv+'g'],['Frozen Water Target',frozenT+'%']];
+        params.forEach(([l,v])=>addLine(`  ${l.padEnd(22)}: ${v}`,8.5));
+        sep();
+        hdr2('INGREDIENT FORMULATION');
+        addLine(`  ${' #'.padEnd(4)}${'Ingredient'.padEnd(38)}${'Type'.padEnd(16)}${'g'.padStart(8)}${'% Batch'.padStart(10)}`,8.5,true,[70,60,50]);
+        selectedIngredients.forEach((i,n)=>{
+            const pct=(i.quantity/bs*100).toFixed(3);
+            const type=i._isAdditive?i.Category:'Base';
+            addLine(`  ${String(n+1).padStart(3).padEnd(4)}${(i.name||'').substring(0,37).padEnd(38)}${type.padEnd(16)}${String(i.quantity.toFixed(2)).padStart(8)}${(pct+'%').padStart(10)}`,8);
+        });
+        sep();
+        hdr2('KEY METRICS (per 100g)');
+        const metrics=[
+            ['PAC ×10',(nt.pac*f100*10).toFixed(2),' '],['POD ×10',(nt.pod*f100*10).toFixed(2),' '],
+            ['Fat',(nt.fat*f100).toFixed(2),'g'],['MSNF',(nt.msnf*f100).toFixed(2),'g'],
+            ['Total Solids',totSolids.toFixed(2),'%'],['Water',(nt.water*f100).toFixed(2),'%'],
+            ['Energy',(nt.energy*f100).toFixed(0),'kcal'],['HF ×10',(nt.hf*f100*10).toFixed(2),' ']
+        ];
+        metrics.forEach(([l,v,u])=>addLine(`  ${l.padEnd(18)}${v} ${u}`,8.5));
+        y+=2;
+        addLine(`  Initial Freezing Point:  ${initFP.toFixed(2)} °C`,9,true,[42,107,82]);y+=1;
+        addLine(`  Serving Temperature:     ${servFP.toFixed(2)} °C  @ ${frozenT}% frozen water`,9,true,[42,107,82]);y+=1;
+        addLine(`  Free Water: ${freeW.toFixed(2)} g/100g`,8,false,[80,100,80]);
+        sep();
+        hdr2(`NUTRITION INFORMATION (${currentRegion})`);
+        addLine(`  ${'Nutrient'.padEnd(22)}${'Per 100g'.padStart(12)}${'Per '+sv+'g'.padStart(12)}${'%DV/GDA'.padStart(10)}`,8.5,true,[70,60,50]);
+        [['Energy',(nt.energy*f100).toFixed(0)+' kcal',(nt.energy*f100*sfv).toFixed(0)+' kcal',dvP(nt.energy*f100*sfv,dv.energy)+'%'],
+         ['Total Fat',(nt.fat*f100).toFixed(2)+'g',(nt.fat*f100*sfv).toFixed(1)+'g',dvP(nt.fat*f100*sfv,dv.fat)+'%'],
+         ['Carbohydrates',(nt.carbs*f100).toFixed(2)+'g',(nt.carbs*f100*sfv).toFixed(1)+'g',dvP(nt.carbs*f100*sfv,dv.carbs)+'%'],
+         ['Total Sugars',(nt.sugar*f100).toFixed(2)+'g',(nt.sugar*f100*sfv).toFixed(1)+'g',dvP(nt.sugar*f100*sfv,dv.sugar)+'%'],
+         ['Dietary Fiber',(nt.fiber*f100).toFixed(2)+'g',(nt.fiber*f100*sfv).toFixed(1)+'g',dvP(nt.fiber*f100*sfv,dv.fiber)+'%'],
+         ['Protein',(nt.protein*f100).toFixed(2)+'g',(nt.protein*f100*sfv).toFixed(1)+'g',dvP(nt.protein*f100*sfv,dv.protein)+'%'],
+         ['Salt',(nt.salt*f100).toFixed(4)+'g',(nt.salt*f100*sfv).toFixed(2)+'g',dvP(nt.salt*f100*sfv,dv.salt)+'%'],
+         ['Calcium',(nt.calcium*f100).toFixed(1)+'mg',(nt.calcium*f100*sfv).toFixed(0)+'mg',dvP(nt.calcium*f100*sfv,dv.calcium)+'%']
+        ].forEach(([l,v,sv2,dv2])=>addLine(`  ${l.padEnd(22)}${v.padStart(12)}${sv2.padStart(12)}${dv2.padStart(10)}`,8));
+        sep();
+        hdr2('ADDITIVES DETAIL');
+        const adds=selectedIngredients.filter(i=>i._isAdditive);
+        if(adds.length){
+            addLine(`  ${'Type'.padEnd(14)}${'Name'.padEnd(40)}${'g'.padStart(10)}${'% batch'.padStart(10)}`,8.5,true,[70,60,50]);
+            adds.forEach(i=>addLine(`  ${i.Category.padEnd(14)}${i.name.substring(0,39).padEnd(40)}${i.quantity.toFixed(4).padStart(10)}${(i.quantity/bs*100).toFixed(4).padStart(9)}%`,8));
+            const totalAdd=adds.reduce((s,i)=>s+(i.quantity||0),0);
+            addLine(`  ${'TOTAL ADDITIVES'.padEnd(14)}${' '.padEnd(40)}${totalAdd.toFixed(4).padStart(10)}${(totalAdd/bs*100).toFixed(4).padStart(9)}%`,8.5,true,[42,107,82]);
+        }else addLine('  No additives selected.',8);
+        sep();
+        addLine(`Gelato & Ice Cream Formulator · by Nitin Shah · ${new Date().toLocaleDateString()}`,7,false,[150,130,110]);
+        doc.save(`Formulation_${new Date().toISOString().slice(0,10)}.pdf`);
+        showToast('✅ PDF exported successfully');
+    }catch(ex){showToast('PDF error: '+ex.message+' — try browser print instead',true);}
+}
+
+function exportExcel(){
+    if(!selectedIngredients.length){showToast('No data to export',true);return;}
+    try{
+        if(typeof XLSX==='undefined')throw new Error('XLSX not loaded');
+        const bs=parseFloat(document.getElementById('batchSize').value)||1000;
+        const sv=parseFloat(document.getElementById('servingSize').value)||100;
+        const machine=document.getElementById('machineType').value;
+        const process=document.getElementById('processType').value;
+        const overrun=document.getElementById('overrun').value;
+        const frozenT=document.getElementById('frozenWaterTarget').value;
+        const storageT=document.getElementById('storageTemp').value;
+        const shelfL=document.getElementById('shelfLife').value;
+        const nt=computeNutrAll();
+        const f100=nt.weight>0?100/nt.weight:0, sfv=sv/100;
+        const dv=DV[currentRegion];
+        const dvP=(v,r)=>parseFloat(((v/r)*100).toFixed(1));
+        const initFP=computeFreezingPoint(nt.water*f100,(nt.pac*f100)*10,(nt.hf*f100)*10,nt.salt*f100,nt.msnf*f100);
+        const totSolids=100-nt.water*f100;
+        const freeW=(100-totSolids)*(1-parseFloat(frozenT)/100);
+        const servFP=computeFreezingPoint(freeW,(nt.pac*f100)*10,(nt.hf*f100)*10,nt.salt*f100,nt.msnf*f100);
+        const wb=XLSX.utils.book_new();
+
+        // Sheet 1 — Ingredient Formulation
+        const s1=[
+            ['GELATO & ICE CREAM FORMULATION REPORT','','','','','','','','',''],
+            ['Generated',new Date().toLocaleString(),'','','','','','','',''],
+            [''],
+            ['BATCH PARAMETERS','','','','','','','','',''],
+            ['Machine',machine,'Process',process,'Batch Size (g)',bs,'Overrun %',overrun,'Storage Temp (°C)',storageT],
+            ['Shelf Life (months)',shelfL,'Serving Size (g)',sv,'Frozen Water Target (%)',frozenT,'Region',currentRegion,'',''],
+            [''],
+            ['INGREDIENT LIST','','','','','','','','',''],
+            ['#','Ingredient','Type','Category','Quantity (g)','% of Batch','Energy (kcal)','Fat (g)','Carbs (g)','Protein (g)','Salt (g)','Water (g)']
+        ];
+        selectedIngredients.forEach((i,n)=>{
+            const q=i.quantity||0;
+            s1.push([n+1,i.name,i._isAdditive?'Additive':'Base Ingredient',i.Category||'',
+                q, parseFloat((q/bs*100).toFixed(4)),
+                parseFloat(((i.Energy||0)*q/100).toFixed(2)),
+                parseFloat(((i['Total fat']||0)*q/100).toFixed(3)),
+                parseFloat(((i.Carbohydrates||0)*q/100).toFixed(3)),
+                parseFloat(((i.Protein||0)*q/100).toFixed(3)),
+                parseFloat(((i.Salt||0)*q/100).toFixed(4)),
+                parseFloat(((i.Water||0)*q/100).toFixed(3))
+            ]);
+        });
+        s1.push(['','TOTAL','','',nt.weight.toFixed(2),'100%',
+            parseFloat((nt.energy*f100).toFixed(1)),parseFloat((nt.fat*f100).toFixed(2)),
+            parseFloat((nt.carbs*f100).toFixed(2)),parseFloat((nt.protein*f100).toFixed(2)),
+            parseFloat((nt.salt*f100).toFixed(4)),parseFloat((nt.water*f100).toFixed(2))]);
+        const ws1=XLSX.utils.aoa_to_sheet(s1);
+        ws1['!cols']=[{wch:4},{wch:38},{wch:18},{wch:14},{wch:12},{wch:10},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10}];
+        XLSX.utils.book_append_sheet(wb,ws1,'Recipe Card');
+
+        // Sheet 2 — Nutrition Analysis
+        const s2=[
+            ['NUTRITION ANALYSIS','','',''],
+            [''],['Region',currentRegion,'',''],
+            [''],
+            ['Nutrient','Per 100g','Per '+sv+'g Serving','Unit','%'+currentRegion],
+            ['Energy',(nt.energy*f100).toFixed(0),(nt.energy*f100*sfv).toFixed(0),'kcal',dvP(nt.energy*f100*sfv,dv.energy)],
+            ['Total Fat',(nt.fat*f100).toFixed(2),(nt.fat*f100*sfv).toFixed(2),'g',dvP(nt.fat*f100*sfv,dv.fat)],
+            ['Saturated Fat',(nt.fat*f100*0.6).toFixed(2),(nt.fat*f100*0.6*sfv).toFixed(2),'g','—'],
+            ['Carbohydrates',(nt.carbs*f100).toFixed(2),(nt.carbs*f100*sfv).toFixed(2),'g',dvP(nt.carbs*f100*sfv,dv.carbs)],
+            ['Total Sugars',(nt.sugar*f100).toFixed(2),(nt.sugar*f100*sfv).toFixed(2),'g',dvP(nt.sugar*f100*sfv,dv.sugar)],
+            ['Dietary Fiber',(nt.fiber*f100).toFixed(2),(nt.fiber*f100*sfv).toFixed(2),'g',dvP(nt.fiber*f100*sfv,dv.fiber)],
+            ['Protein',(nt.protein*f100).toFixed(2),(nt.protein*f100*sfv).toFixed(2),'g',dvP(nt.protein*f100*sfv,dv.protein)],
+            ['Salt',(nt.salt*f100).toFixed(4),(nt.salt*f100*sfv).toFixed(4),'g',dvP(nt.salt*f100*sfv,dv.salt)],
+            ['Calcium',(nt.calcium*f100).toFixed(1),(nt.calcium*f100*sfv).toFixed(1),'mg',dvP(nt.calcium*f100*sfv,dv.calcium)],
+            ['Water',(nt.water*f100).toFixed(2),(nt.water*f100*sfv).toFixed(2),'g','—'],
+            [''],
+            ['KEY TECHNICAL METRICS','','','',''],
+            ['MSNF',(nt.msnf*f100).toFixed(2),'','g',''],
+            ['PAC ×10',(nt.pac*f100*10).toFixed(2),'','',''],
+            ['POD ×10',(nt.pod*f100*10).toFixed(2),'','',''],
+            ['HF ×10',(nt.hf*f100*10).toFixed(2),'','',''],
+            ['Total Solids',totSolids.toFixed(2),'','%',''],
+            ['Initial Freezing Point',initFP.toFixed(2),'','°C',''],
+            ['Serving Temperature',servFP.toFixed(2),'','°C',''],
+            ['Free Water @ '+frozenT+'% FW',freeW.toFixed(2),'','g/100g','']
+        ];
+        const ws2=XLSX.utils.aoa_to_sheet(s2);
+        ws2['!cols']=[{wch:28},{wch:14},{wch:16},{wch:8},{wch:12}];
+        XLSX.utils.book_append_sheet(wb,ws2,'Nutrition');
+
+        // Sheet 3 — Additives Detail
+        const stabSel=selectedIngredients.filter(i=>i._isAdditive&&i.Category==='Stabiliser');
+        const emuSel=selectedIngredients.filter(i=>i._isAdditive&&i.Category==='Emulsifier');
+        const protSel=selectedIngredients.filter(i=>i._isAdditive&&i.Category==='Protein');
+        const s3=[
+            ['ADDITIVES — STABILISERS, EMULSIFIERS & PROTEINS','','','',''],
+            [''],
+            ['Type','Name','Quantity (g)','% of Batch','Notes'],
+        ];
+        stabSel.forEach(i=>s3.push(['Stabiliser',i.name,i.quantity.toFixed(4),parseFloat((i.quantity/bs*100).toFixed(4))+'%','Auto-calculated']));
+        if(!stabSel.length)s3.push(['Stabiliser','(none selected)','','','']);
+        emuSel.forEach(i=>s3.push(['Emulsifier',i.name,i.quantity.toFixed(4),parseFloat((i.quantity/bs*100).toFixed(4))+'%','Auto-calculated']));
+        if(!emuSel.length)s3.push(['Emulsifier','(none selected)','','','']);
+        protSel.forEach(i=>s3.push(['Protein',i.name,i.quantity.toFixed(3),parseFloat((i.quantity/bs*100).toFixed(3))+'%','Auto-calculated']));
+        if(!protSel.length)s3.push(['Protein','(none selected)','','','']);
+        s3.push(['']);
+        const totalAdd=[...stabSel,...emuSel,...protSel].reduce((s,i)=>s+(i.quantity||0),0);
+        s3.push(['TOTAL ADDITIVES','',totalAdd.toFixed(4),parseFloat((totalAdd/bs*100).toFixed(4))+'%','']);
+        s3.push([''],['Selected Stabiliser IDs (S&E chooser)',STABS.filter(s=>document.getElementById('s_'+s.id)?.classList.contains('on')).map(s=>s.id).join(', '),'','','']);
+        s3.push(['Selected Emulsifier IDs',EMUS.filter(e=>document.getElementById('e_'+e.id)?.classList.contains('emu-on')).map(e=>e.id).join(', '),'','','']);
+        const ws3=XLSX.utils.aoa_to_sheet(s3);
+        ws3['!cols']=[{wch:14},{wch:38},{wch:14},{wch:14},{wch:22}];
+        XLSX.utils.book_append_sheet(wb,ws3,'Additives Detail');
+
+        // Sheet 4 — Settings
+        const s4=[['Setting','Value'],
+            ['Machine Type',machine],['Batch Size (g)',bs],['Process Type',process],
+            ['Overrun %',overrun],['Storage Temp (°C)',storageT],['Shelf Life (months)',shelfL],
+            ['Frozen Water Target (%)',frozenT],['Serving Size (g)',sv],
+            ['Nutrition Region',currentRegion],['Generated',new Date().toLocaleString()]];
+        const ws4=XLSX.utils.aoa_to_sheet(s4); ws4['!cols']=[{wch:28},{wch:22}];
+        XLSX.utils.book_append_sheet(wb,ws4,'Settings');
+        XLSX.writeFile(wb,`Formulation_${new Date().toISOString().slice(0,10)}.xlsx`);
+        showToast('✅ Excel exported — 4 sheets: Recipe · Nutrition · Additives · Settings');
+    }catch(ex){
+        showToast('Excel error — exporting CSV instead',false);
+        exportCSV();
+    }
+}
+
+function exportCSV(){
+    if(!selectedIngredients.length){showToast('No data',true);return;}
+    const bs=parseFloat(document.getElementById('batchSize').value)||1000;
+    const nt=computeNutrAll();
+    const f100=nt.weight>0?100/nt.weight:0;
+    let csv='\uFEFFGELATO & ICE CREAM FORMULATION REPORT\n';
+    csv+=`Generated,${new Date().toLocaleString()}\n`;
+    csv+=`Machine,${document.getElementById('machineType').value},Batch,${bs}g,Process,${document.getElementById('processType').value}\n\n`;
+    csv+='--- INGREDIENTS ---\n';
+    csv+='Ingredient,Type,Category,Quantity(g),%(Batch),Energy(kcal),Fat(g),Carbs(g),Protein(g),Salt(g)\n';
+    selectedIngredients.forEach(i=>{
+        const q=i.quantity||0;
+        csv+=`"${i.name}",${i._isAdditive?'Additive':'Base'},${i.Category||''},${q},${(q/bs*100).toFixed(4)}%,${((i.Energy||0)*q/100).toFixed(2)},${((i['Total fat']||0)*q/100).toFixed(3)},${((i.Carbohydrates||0)*q/100).toFixed(3)},${((i.Protein||0)*q/100).toFixed(3)},${((i.Salt||0)*q/100).toFixed(4)}\n`;
+    });
+    csv+='\n--- NUTRITION PER 100g ---\n';
+    csv+=`Energy,${(nt.energy*f100).toFixed(1)} kcal\n`;
+    csv+=`Fat,${(nt.fat*f100).toFixed(2)} g\nCarbs,${(nt.carbs*f100).toFixed(2)} g\nSugars,${(nt.sugar*f100).toFixed(2)} g\nFiber,${(nt.fiber*f100).toFixed(2)} g\nProtein,${(nt.protein*f100).toFixed(2)} g\nSalt,${(nt.salt*f100).toFixed(4)} g\nCalcium,${(nt.calcium*f100).toFixed(1)} mg\n`;
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download=`Formulation_${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(a.href);
+    showToast('✅ CSV exported');
+}
+
+function printLabel(){
+    if(!selectedIngredients.length){showToast('No ingredients',true);return;}
+    const name=prompt('Product name:','My Ice Cream'); if(!name)return;
+    const bs=parseFloat(document.getElementById('batchSize').value)||1000;
+    const sv=parseFloat(document.getElementById('servingSize').value)||100;
+    const ings=[...selectedIngredients.filter(i=>!i._isAdditive),...selectedIngredients.filter(i=>i._isAdditive)].map(i=>({g:i._isAdditive?i.name:getGenericName(i.name),p:(i.quantity/bs)*100})).sort((a,b)=>b.p-a.p);
+    const nt=computeNutrAll();
+    const sfv=sv/nt.weight;
+    const dv=DV[currentRegion];
+    const dvP=(v,r)=>((v/r)*100).toFixed(0);
+    const w=window.open('','_blank');
+    w.document.write(`<!DOCTYPE html><html><head><title>${name}</title><style>body{font-family:sans-serif;padding:20px;max-width:420px;margin:0 auto}h2{font-size:14pt;border-bottom:2px solid #000;padding-bottom:4px}h3{font-size:10pt;border-top:2px solid #000;border-bottom:1px solid #000;padding:2px 0;margin-top:10px}table{width:100%;border-collapse:collapse;font-size:9pt}td{padding:3px 2px;border-bottom:1px solid #ddd}td:last-child{text-align:right}.pa{text-align:center;margin-top:16px}@media print{.pa{display:none}}</style></head><body>
+    <h2>${name}</h2>
+    <p style="font-size:8pt"><strong>INGREDIENTS</strong> (descending order):<br>${ings.map(i=>`${i.g} (${i.p.toFixed(2)}%)`).join(', ')}</p>
+    <h3>Nutrition Facts — Per ${sv}g Serving</h3>
+    <table>
+    <tr><td><strong>Energy</strong></td><td><strong>${(nt.energy*sfv).toFixed(0)} kcal</strong></td><td>${dvP(nt.energy*sfv,dv.energy)}%</td></tr>
+    <tr><td>Total Fat</td><td>${(nt.fat*sfv).toFixed(1)}g</td><td>${dvP(nt.fat*sfv,dv.fat)}%</td></tr>
+    <tr><td>Carbohydrates</td><td>${(nt.carbs*sfv).toFixed(1)}g</td><td>${dvP(nt.carbs*sfv,dv.carbs)}%</td></tr>
+    <tr><td>Total Sugars</td><td>${(nt.sugar*sfv).toFixed(1)}g</td><td>${dvP(nt.sugar*sfv,dv.sugar)}%</td></tr>
+    <tr><td>Dietary Fiber</td><td>${(nt.fiber*sfv).toFixed(1)}g</td><td>${dvP(nt.fiber*sfv,dv.fiber)}%</td></tr>
+    <tr><td>Protein</td><td>${(nt.protein*sfv).toFixed(1)}g</td><td>${dvP(nt.protein*sfv,dv.protein)}%</td></tr>
+    <tr><td>Salt</td><td>${(nt.salt*sfv).toFixed(2)}g</td><td>${dvP(nt.salt*sfv,dv.salt)}%</td></tr>
+    <tr><td>Calcium</td><td>${(nt.calcium*sfv).toFixed(0)}mg</td><td>${dvP(nt.calcium*sfv,dv.calcium)}%</td></tr>
+    </table>
+    <p style="font-size:7pt;margin-top:6px">*%${currentRegion==='USA'?'Daily Values':currentRegion==='EU'?'GDA':'RDA'} based on ${currentRegion} standard</p>
+    <div class="pa"><button onclick="print()">🖨️ Print</button> <button onclick="close()">Close</button></div>
+    </body></html>`);
+    w.document.close();
+}
+
+function setRegion(r){currentRegion=r;computeAll();}
+function showToast(msg,isErr=false){const t=document.getElementById('toastMsg');t.textContent=msg;t.style.background=isErr?'#C0392B':'#2A6B52';t.style.opacity='1';setTimeout(()=>t.style.opacity='0',3200);}
+
+// ═══════════════════════════════════════
+// FEATURE 2: INGREDIENT EDITOR
+// ═══════════════════════════════════════
+function openIngEditor(){
+    renderIngTable('');
+    document.getElementById('ingEdSearch').value='';
+    cancelIngForm();
+    openModal('ingEditorModal');
+}
+
+function renderIngTable(filter){
+    const term = (filter||'').toLowerCase();
+    const rows = ingredientMaster.filter(i=>
+        i.Name.toLowerCase().includes(term) || (i.Category||'').toLowerCase().includes(term)
+    );
+    const tbody = document.getElementById('ingEditorBody');
+    tbody.innerHTML = rows.map(i => `<tr>
+        <td style="font-weight:700;max-width:160px;word-break:break-word">${i.Name}</td>
+        <td>${i.Category||''}</td>
+        <td style="font-family:'DM Mono',monospace">${i.Energy||0}</td>
+        <td style="font-family:'DM Mono',monospace">${(i.Water||0).toFixed(1)}</td>
+        <td style="font-family:'DM Mono',monospace">${(i['Total fat']||0).toFixed(1)}</td>
+        <td style="font-family:'DM Mono',monospace">${(i.Carbohydrates||0).toFixed(1)}</td>
+        <td style="font-family:'DM Mono',monospace">${(i.Protein||0).toFixed(1)}</td>
+        <td style="font-family:'DM Mono',monospace">${(i.PAC||0).toFixed(1)}</td>
+        <td style="font-family:'DM Mono',monospace">${(i.POD||0).toFixed(1)}</td>
+        <td style="font-family:'DM Mono',monospace">${(i.HF||0).toFixed(1)}</td>
+        <td style="white-space:nowrap">
+            <button class="ing-ed-btn edit" onclick="showIngForm('${i.Name.replace(/'/g,"\\'")}')">✏️ Edit</button>
+            <button class="ing-ed-btn del"  onclick="deleteIngFromDB('${i.Name.replace(/'/g,"\\'")}')">🗑️</button>
+        </td>
+    </tr>`).join('');
+}
+
+function showIngForm(name){
+    ingFormEditName = name || null;
+    const box = document.getElementById('ingFormBox');
+    box.style.display = 'block';
+    box.scrollIntoView({behavior:'smooth',block:'nearest'});
+    if(!name){
+        document.getElementById('ingFormTitle').textContent = '➕ Add New Ingredient';
+        ['ifName','ifCategory','ifEnergy','ifWater','ifFat','ifSatFat','ifCarbs','ifSugars',
+         'ifFiber','ifProtein','ifSalt','ifCalcium','ifMsnf','ifAlcohol','ifPac','ifPod','ifHf','ifGi','ifRate']
+        .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=id==='ifCategory'?'':'0'; });
+        document.getElementById('ifName').value='';
+    } else {
+        const ing = ingredientMaster.find(i=>i.Name===name); if(!ing) return;
+        document.getElementById('ingFormTitle').textContent = `✏️ Edit: ${name}`;
+        document.getElementById('ifName').value        = ing.Name||'';
+        document.getElementById('ifCategory').value   = ing.Category||'';
+        document.getElementById('ifEnergy').value     = ing.Energy||0;
+        document.getElementById('ifWater').value      = ing.Water||0;
+        document.getElementById('ifFat').value        = ing['Total fat']||0;
+        document.getElementById('ifSatFat').value     = ing['Saturated fat']||0;
+        document.getElementById('ifCarbs').value      = ing.Carbohydrates||0;
+        document.getElementById('ifSugars').value     = ing['Total sugars']||0;
+        document.getElementById('ifFiber').value      = ing.Fiber||0;
+        document.getElementById('ifProtein').value    = ing.Protein||0;
+        document.getElementById('ifSalt').value       = ing.Salt||0;
+        document.getElementById('ifCalcium').value    = ing.Calcium||0;
+        document.getElementById('ifMsnf').value       = ing.MSNF||0;
+        document.getElementById('ifAlcohol').value    = ing.Alcohol||0;
+        document.getElementById('ifPac').value        = ing.PAC||0;
+        document.getElementById('ifPod').value        = ing.POD||0;
+        document.getElementById('ifHf').value         = ing.HF||0;
+        document.getElementById('ifGi').value         = ing['Glycemic Index']||0;
+        document.getElementById('ifRate').value       = ing['Rate(Kg)']||0;
+    }
+}
+
+function cancelIngForm(){
+    document.getElementById('ingFormBox').style.display='none';
+    ingFormEditName = null;
+}
+
+function saveIngForm(){
+    const name     = document.getElementById('ifName').value.trim();
+    const category = document.getElementById('ifCategory').value.trim();
+    if(!name)    { showToast('Name is required',true); return; }
+    if(!category){ showToast('Category is required',true); return; }
+    const gn = id => parseFloat(document.getElementById(id).value)||0;
+    const newIng = {
+        Name:name, Category:category,
+        Energy:gn('ifEnergy'), Water:gn('ifWater'),
+        'Total fat':gn('ifFat'), 'Saturated fat':gn('ifSatFat'), 'Trans fat':0, 'Milk fat':0, 'Cacao fat':0,
+        'Other fat':gn('ifFat'), Cholesterol:0, Sodium:0, Salt:gn('ifSalt'), Alcohol:gn('ifAlcohol'),
+        Carbohydrates:gn('ifCarbs'), Fiber:gn('ifFiber'), 'Total sugars':gn('ifSugars'), Polyols:0,
+        'Added sugars':0, Lactose:0, Protein:gn('ifProtein'),
+        'Total solids': 100 - gn('ifWater'), 'Other solids':0, 'Cacao solids':0,
+        MSNF:gn('ifMsnf'), Calcium:gn('ifCalcium'),
+        PAC:gn('ifPac'), POD:gn('ifPod'), HF:gn('ifHf'),
+        'Glycemic Index':gn('ifGi'), 'Rate(Kg)':gn('ifRate'), Source:'User'
+    };
+    if(ingFormEditName){
+        // Update existing
+        const idx = ingredientMaster.findIndex(i=>i.Name===ingFormEditName);
+        if(idx>=0) ingredientMaster[idx] = newIng; else ingredientMaster.push(newIng);
+        // Update selectedIngredients references
+        selectedIngredients = selectedIngredients.map(i=>{
+            if(!i._isAdditive && i.name===ingFormEditName){ return {...newIng, name:newIng.Name, quantity:i.quantity}; }
+            return i;
+        });
+        showToast(`✅ "${name}" updated`);
+    } else {
+        if(ingredientMaster.some(i=>i.Name===name)){ showToast(`"${name}" already exists. Use Edit.`,true); return; }
+        ingredientMaster.push(newIng);
+        showToast(`✅ "${name}" added to database`);
+    }
+    // Rebuild category filter
+    const cats = [...new Set(ingredientMaster.map(i=>i.Category).filter(c=>c))].sort();
+    const cf = document.getElementById('categoryFilter');
+    cf.innerHTML = '<option value="">All categories</option>';
+    cats.forEach(c=>{ cf.innerHTML+=`<option value="${c}">${c}</option>`; });
+    document.getElementById('ingCount').textContent = ingredientMaster.length;
+    cancelIngForm();
+    renderIngTable(document.getElementById('ingEdSearch').value);
+    renderList(); computeAll();
+}
+
+function deleteIngFromDB(name){
+    if(!confirm(`Remove "${name}" from the database?\n(Already-added batch quantities are not affected.)`)) return;
+    ingredientMaster = ingredientMaster.filter(i=>i.Name!==name);
+    document.getElementById('ingCount').textContent = ingredientMaster.length;
+    renderIngTable(document.getElementById('ingEdSearch').value);
+    showToast(`🗑️ "${name}" removed`);
+}
+
+function exportIngDB(){
+    const headers=['Name','Category','Energy','Water','Total fat','Saturated fat','Carbohydrates',
+        'Total sugars','Fiber','Protein','Salt','Calcium','MSNF','Alcohol','PAC','POD','HF','Glycemic Index','Rate(Kg)'];
+    let csv = headers.join(',') + '\n';
+    ingredientMaster.forEach(i=>{
+        csv += headers.map(h=>{
+            const v = i[h]??'';
+            return typeof v==='string'&&v.includes(',') ? `"${v}"` : v;
+        }).join(',') + '\n';
+    });
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download=`IngredientDB_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(a.href);
+    showToast('✅ Ingredient DB exported');
+}
+
+// ═══════════════════════════════════════
+// EVENT LISTENERS
+// ═══════════════════════════════════════
+document.getElementById('editIngBtn').addEventListener('click', openIngEditor);
+document.getElementById('csvUpload').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{loadDB(ev.target.result,true);e.target.value='';};r.onerror=()=>showToast('Error reading file',true);r.readAsText(f,'UTF-8');});
+document.getElementById('machineType').addEventListener('change',updateBatchFromMachine);
+['batchSize','frozenWaterTarget','servingSize','overrun','storageTemp','shelfLife'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{if(id==='batchSize')checkBatch();computeAll();}));
+document.getElementById('processType').addEventListener('change',computeAll);
+document.getElementById('searchInput').addEventListener('input',filterIngredients);
+document.getElementById('categoryFilter').addEventListener('change',filterIngredients);
+document.getElementById('clearAllBtn').addEventListener('click',clearAllIngredients);
+['recalcBtn','recalcBtn2'].forEach(id=>document.getElementById(id).addEventListener('click',computeAll));
+['autoFormulateBtn','autoFormulateBtn2'].forEach(id=>document.getElementById(id).addEventListener('click',autoFormulate));
+document.getElementById('saveRecipeBtn').addEventListener('click',openSaveModal);
+document.getElementById('loadRecipeBtn').addEventListener('click',openLoadModal);
+document.getElementById('exportCSVBtn').addEventListener('click',exportCSV);
+document.getElementById('exportExcelBtn').addEventListener('click',exportExcel);
+document.getElementById('exportPDFBtn').addEventListener('click',exportPDF);
+document.getElementById('printLabelBtn').addEventListener('click',printLabel);
+document.querySelectorAll('#stabPresets button[data-preset]').forEach(b=>b.addEventListener('click',()=>{const p=b.getAttribute('data-preset');if(p==='clear')clearStabs();else applyStabPreset(p);}));
+document.querySelectorAll('#emuPresets button[data-emu-preset]').forEach(b=>b.addEventListener('click',()=>{const p=b.getAttribute('data-emu-preset');if(p==='clear')clearEmus();else applyEmuPreset(p);}));
+// Close modals on overlay click
+['saveModal','loadModal','ingEditorModal'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id))closeModal(id);}));
+// Enter key in save name input
+document.getElementById('saveRecipeNameInput').addEventListener('keydown',e=>{if(e.key==='Enter')confirmSave();});
+
+// INIT
+loadDB(DEFAULT_CSV,false);
+buildStabGrid();buildEmuGrid();updateBatchFromMachine();computeAll();
+
+// Globals for inline handlers
+window.addIngredient=addIngredient; window.updateQty=updateQty; window.removeIng=removeIng;
+window.syncBatch=syncBatch; window.syncBatchFull=syncBatchFull;
+window.setRegion=setRegion; window.computeAll=computeAll;
+window.openSaveModal=openSaveModal; window.confirmSave=confirmSave;
+window.openLoadModal=openLoadModal; window.doLoadRecipe=doLoadRecipe; window.deleteRecipe=deleteRecipe;
+window.closeModal=closeModal;
+window.exportPDF=exportPDF; window.exportExcel=exportExcel; window.exportCSV=exportCSV;
+window.openIngEditor=openIngEditor; window.showIngForm=showIngForm;
+window.cancelIngForm=cancelIngForm; window.saveIngForm=saveIngForm;
+window.deleteIngFromDB=deleteIngFromDB; window.exportIngDB=exportIngDB;
+window.applyUnitToggle=applyUnitToggle; window.applyHFToggle=applyHFToggle; window.renderIngTable=renderIngTable;
+</script>
+</body>
+</html>
